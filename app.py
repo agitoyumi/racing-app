@@ -1,27 +1,44 @@
-# --- 修正版：今日官方實時名單模型 ---
-RACE_MODELS = {
-    6: {
-        "名單": "2 神虎龍駒, 12 手到再來, 14 整得好",
-        "邏輯": "12 & 14 負磅僅 115-116 磅，極符合今日爆冷特徵。"
-    },
-    7: {
-        "名單": "9 喜至寶, 11 魅影獵飛, 1 增有",
-        "邏輯": "9 號輕磅且由布文策騎，是今日冷門首選。"
-    },
-    8: {
-        "名單": "3 錶之銀河, 8 全城帶勝, 6 嘉應高昇",
-        "邏輯": "3 號雖然重磅但級數極高，8 號則是輕磅奇兵。"
-    },
-    9: {
-        "名單": "10 精彩勇士, 13 團結一心, 7 萬事快",
-        "邏輯": "直路賽外欄優勢，10 號負磅有明顯利好。"
-    },
-    10: {
-        "名單": "14 嘉應傳承, 5 駿步騰飛, 2 旗幟鬥士",
-        "邏輯": "14 號是底磅馬，113 磅配輕磅騎師極具威脅。"
-    },
-    11: {
-        "名單": "7 綠族無限, 12 步大威猛, 9 朗朗乾坤",
-        "邏輯": "尾場大亂鬥，7 號負磅 122 磅在中游位置，具備衝擊力。"
-    }
-}
+import streamlit as st
+import pandas as pd
+import requests
+
+# 1. 基本設定
+st.set_page_config(page_title="賽馬 AI", layout="wide")
+st.title("🏇 AI 賽馬精準分析")
+
+# 2. 強力抓取邏輯 (針對第 6-11 場)
+def quick_fetch(race_no):
+    url = f"https://racing.hkjc.com/racing/information/Chinese/Racing/RaceCard.aspx?RaceNo={race_no}"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        # 嘗試自動讀取表格
+        dfs = pd.read_html(requests.get(url, headers=headers, timeout=5).text)
+        for df in dfs:
+            if "馬名" in str(df.columns):
+                # 清理標題並回傳
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = df.columns.get_level_values(-1)
+                return df[["馬號", "馬名", "負磅", "檔位"]].dropna().head(14)
+        return None
+    except:
+        return None
+
+# 3. 介面與顯示
+race_no = st.sidebar.selectbox("選擇場次", range(1, 12), index=5)
+
+# 顯示手動 AI 分析 (防止連線失敗)
+st.info(f"💡 今日 C 賽道邏輯：關注輕磅馬 (120 磅以下)")
+
+try:
+    df = quick_fetch(race_no)
+    if df is not None:
+        st.success(f"✅ 第 {race_no} 場 官方數據已同步")
+        st.table(df) # 使用 table 代替 dataframe，顯示更穩定
+    else:
+        st.warning("⚠️ 官方線路繁忙，請參考以下第 6 場核心冷門：")
+        st.write("**12 號 手到再來 (116磅)**、**14 號 整得好 (115磅)**")
+except Exception as e:
+    st.error("系統正在自我修復中，請點擊下方按鈕。")
+
+if st.button("刷新頁面"):
+    st.rerun()
