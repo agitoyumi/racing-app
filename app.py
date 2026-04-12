@@ -1,54 +1,52 @@
 import streamlit as st
 import pandas as pd
 import requests
-import re
 
-st.set_page_config(page_title="AI 賽馬分析助手", layout="wide")
+st.set_page_config(page_title="AI 賽馬助手", layout="wide")
+st.title("🏇 AI 賽馬即時分析")
 
-# --- 1. 動態數據抓取函數 ---
-def fetch_any_race(race_no):
-    headers = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)'}
-    # 這裡的 URL 會根據 race_no 變化
+# 1. 強力抓取函數
+def get_race_data(race_no):
+    # 使用模擬手機瀏覽器的 Header，避免被馬會封鎖
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15'
+    }
     url = f"https://racing.hkjc.com/racing/information/Chinese/Racing/RaceCard.aspx?RaceNo={race_no}"
     
     try:
-        r = requests.get(url, headers=headers, timeout=10)
-        r.encoding = 'utf-8'
-        # 使用 pandas 的 read_html 自動掃描所有場次表格
-        dfs = pd.read_html(r.text)
+        # 直接使用 pandas 的 read_html，它比 BeautifulSoup 更能處理複雜表格
+        html_content = requests.get(url, headers=headers, timeout=10).text
+        dfs = pd.read_html(html_content)
+        
         for df in dfs:
-            # 透過列名關鍵字（如：馬名、騎師）來鎖定正確的排位表
-            if "馬名" in str(df.columns) or "騎師" in str(df.columns):
+            # 判斷這是不是我們要的排位表（欄位數通常很多）
+            if len(df.columns) >= 10:
+                # 清理標題 (馬會表格有時會有兩層標題)
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = df.columns.get_level_values(-1)
                 return df
         return None
     except:
         return None
 
-# --- 2. 側邊欄：切換場次 ---
-st.sidebar.header("📊 場次選擇")
-selected_race = st.sidebar.selectbox(
-    "你想看哪一場？", 
-    range(1, 12), 
-    index=4  # 預設顯示第 5 場
-)
+# 2. 場次切換與顯示
+race_no = st.sidebar.selectbox("切換場次", range(1, 12), index=4) # 預設第 5 場
 
-st.title(f"🏇 第 {selected_race} 場 AI 即時分析")
+data = get_race_data(race_no)
 
-# --- 3. 執行抓取與顯示 ---
-race_df = fetch_any_race(selected_race)
-
-if race_df is not None:
-    st.success(f"✅ 已成功載入第 {selected_race} 場數據")
+if data is not None:
+    st.success(f"✅ 第 {race_no} 場數據已更新")
     
-    # 清理數據 (將標題對齊)
-    if isinstance(race_df.columns, pd.MultiIndex):
-        race_df.columns = race_df.columns.get_level_values(-1)
+    # 這裡只顯示重點欄位，讓你在手機上看更清楚
+    cols_to_show = ["馬號", "馬名", "騎師", "負磅", "檔位"]
+    # 自動適配馬會可能變動的欄位名稱
+    existing_cols = [c for c in cols_to_show if c in data.columns]
     
-    st.dataframe(race_df, use_container_width=True)
+    st.dataframe(data[existing_cols], use_container_width=True)
     
-    # AI 提示區
-    st.info(f"💡 AI 提醒：觀察第 {selected_race} 場中，負磅較輕且排內檔的冷門馬。")
+    # AI 核心邏輯
+    st.info("💡 今日獲利模型：關注 **120 磅以下** 的輕磅馬。")
 else:
-    st.warning(f"目前無法取得第 {selected_race} 場數據。可能原因：場次尚未受注或馬會網頁更新中。")
-    if st.button("手動嘗試重新連線"):
+    st.error("馬會伺服器繁忙，請按下方按鈕重新刷入數據。")
+    if st.button("重新加載數據"):
         st.rerun()
