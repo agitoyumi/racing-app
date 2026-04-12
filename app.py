@@ -1,42 +1,43 @@
-def get_data(race_no):
-    # 這裡加入更強的模擬瀏覽器標頭
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15',
-        'Referer': 'https://racing.hkjc.com/'
-    }
+import streamlit as st
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import re
+
+st.title("🏇 AI 賽馬即時分析")
+
+def fetch_data(race_no):
+    headers = {'User-Agent': 'Mozilla/5.0'}
     url = f"https://racing.hkjc.com/racing/information/Chinese/Racing/RaceCard.aspx?RaceNo={race_no}"
-    
     try:
         r = requests.get(url, headers=headers, timeout=10)
         r.encoding = 'utf-8'
         soup = BeautifulSoup(r.text, 'html.parser')
-        
-        # 尋找所有表格，找出那個帶有馬匹編號的
-        all_tables = soup.find_all('table')
-        target_table = None
-        for t in all_tables:
-            if "馬名" in t.text and "負磅" in t.text:
-                target_table = t
-                break
-        
-        if not target_table:
-            return pd.DataFrame()
-        
-        rows = target_table.find_all('tr')
-        data = []
+        # 尋找排位表表格
+        table = soup.find('table', {'class': 'is-tm'})
+        rows = table.find_all('tr')
+        horses = []
         for row in rows:
-            cols = row.find_all('td')
-            # 只要該行第一個字是純數字，就是馬匹數據
-            if len(cols) >= 8:
-                num = cols[0].get_text(strip=True)
-                if num.isdigit():
-                    # 抓取馬名 (通常在第 4 格) 和 負磅 (通常在第 6 格)
-                    data.append({
-                        "馬號": int(num),
-                        "馬名": cols[3].get_text(strip=True),
-                        "負磅": int(re.sub(r'\D', '', cols[5].get_text(strip=True))),
-                        "檔位": int(cols[6].get_text(strip=True)) if cols[6].get_text(strip=True).isdigit() else 0
-                    })
-        return pd.DataFrame(data)
+            tds = row.find_all('td')
+            if len(tds) >= 10 and tds[0].text.strip().isdigit():
+                horses.append({
+                    "馬號": tds[0].text.strip(),
+                    "馬名": tds[3].text.strip(),
+                    "負磅": tds[5].text.strip(),
+                    "檔位": tds[6].text.strip()
+                })
+        return pd.DataFrame(horses)
     except:
-        return pd.DataFrame()
+        return None
+
+race_no = st.sidebar.selectbox("選擇場次", range(1, 12), index=4)
+data = fetch_data(race_no)
+
+if data is not None and not data.empty:
+    st.write(f"### 第 {race_no} 場 排位數據")
+    st.table(data) # 使用最穩定的 table 格式，不使用 dataframe
+    st.info("💡 邏輯提醒：關注負磅 120 以下的馬匹。")
+else:
+    st.error("正在嘗試連線馬會伺服器，請按下方按鈕刷新。")
+    if st.button("手動刷新"):
+        st.rerun()
