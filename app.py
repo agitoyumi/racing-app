@@ -1,56 +1,42 @@
-import streamlit as st
-import pandas as pd
-import requests
-from bs4 import BeautifulSoup
-import re
-
-# 1. 頁面基礎配置
-st.set_page_config(page_title="精準賽馬 AI", layout="wide")
-
-# 2. 爬蟲函數
 def get_data(race_no):
+    # 這裡加入更強的模擬瀏覽器標頭
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15',
+        'Referer': 'https://racing.hkjc.com/'
+    }
     url = f"https://racing.hkjc.com/racing/information/Chinese/Racing/RaceCard.aspx?RaceNo={race_no}"
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    
     try:
         r = requests.get(url, headers=headers, timeout=10)
         r.encoding = 'utf-8'
         soup = BeautifulSoup(r.text, 'html.parser')
-        table = soup.find('table', {'class': 'is-tm'})
         
-        rows = table.find_all('tr')
+        # 尋找所有表格，找出那個帶有馬匹編號的
+        all_tables = soup.find_all('table')
+        target_table = None
+        for t in all_tables:
+            if "馬名" in t.text and "負磅" in t.text:
+                target_table = t
+                break
+        
+        if not target_table:
+            return pd.DataFrame()
+        
+        rows = target_table.find_all('tr')
         data = []
-        for row in rows[1:]:
+        for row in rows:
             cols = row.find_all('td')
-            if len(cols) >= 10:
-                num = cols[0].text.strip()
+            # 只要該行第一個字是純數字，就是馬匹數據
+            if len(cols) >= 8:
+                num = cols[0].get_text(strip=True)
                 if num.isdigit():
+                    # 抓取馬名 (通常在第 4 格) 和 負磅 (通常在第 6 格)
                     data.append({
                         "馬號": int(num),
-                        "馬名": cols[3].text.strip(),
-                        "負磅": int(re.sub(r'\D', '', cols[5].text.strip())),
-                        "檔位": int(cols[6].text.strip()) if cols[6].text.strip().isdigit() else 0
+                        "馬名": cols[3].get_text(strip=True),
+                        "負磅": int(re.sub(r'\D', '', cols[5].get_text(strip=True))),
+                        "檔位": int(cols[6].get_text(strip=True)) if cols[6].get_text(strip=True).isdigit() else 0
                     })
         return pd.DataFrame(data)
     except:
-        return pd.DataFrame() # 失敗回傳空表
-
-# 3. 介面與邏輯
-st.title("🏇 精準 AI 賽馬助手")
-
-race_no = st.sidebar.selectbox("選擇場次", range(1, 12), index=4)
-
-df = get_data(race_no)
-
-if not df.empty:
-    # AI 評分邏輯
-    df['AI 評分'] = df.apply(lambda x: (2 if x['負磅'] <= 120 else 0) + (1 if x['檔位'] <= 4 else 0), axis=1)
-    st.dataframe(df.sort_values("AI 評分", ascending=False), use_container_width=True)
-    
-    # 獲利提醒
-    top_pick = df.sort_values("AI 評分", ascending=False).iloc[0]
-    st.success(f"🔥 AI 推薦：{top_pick['馬號']} 號 {top_pick['馬名']} (輕磅優勢)")
-else:
-    st.error("馬會數據讀取中或暫時無法連線... 請確認場次或稍後重試。")
-    # 這裡是防黑屏的保險：顯示按鈕手動刷新
-    if st.button("手動重新加載數據"):
-        st.rerun()
+        return pd.DataFrame()
