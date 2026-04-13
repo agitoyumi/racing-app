@@ -1,84 +1,80 @@
 import streamlit as st
 
-# --- 全局風格設定 ---
-st.set_page_config(page_title="Miracle Hunter 3.0", layout="wide")
+# --- 頁面配置 ---
+st.set_page_config(page_title="Miracle Hunter 3.1", layout="wide")
 st.markdown("""
     <style>
-    .main { background-color: #0e1117; color: #ffffff; }
-    .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #4e5d6c; }
+    .main { background-color: #05070a; color: #e0e0e0; }
+    .stMetric { background-color: #11151c; border: 2px solid #2e3b4e; border-radius: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🎯 Miracle Hunter 3.0：不再平庸模式")
+st.title("🎯 Miracle Hunter 3.1：質變獵人模式")
+st.write("「奇蹟只係一瞬間出現。捉到，你就唔再係普通賭徒。」")
 
-# --- 第一部分：暴力槓桿配置 (固定注碼) ---
+# --- 側邊欄：獵人資金庫 ---
 with st.sidebar:
-    st.header("🛡️ 獵人資金指令")
-    bet_level = st.select_slider(
-        "選擇出擊級別",
+    st.header("💰 獵人指令面板")
+    bet_amount = st.select_slider(
+        "選擇出擊注碼",
         options=[100, 200, 500],
-        help="500 蚊級別僅限於有盈利時啟動"
+        help="500 蚊級別建議僅限於有盈利時啟動"
     )
-    st.markdown(f"**目前注碼：${bet_level}**")
     st.divider()
-    st.info("💡 奇蹟門檻：$7,000\n🚀 質變目標：$70,000+")
+    st.markdown(f"### 當前戰鬥注碼：**${bet_amount}**")
+    st.info("💡 7k 門檻：已自動對標\n🚀 質變目標：$70,000+")
 
-# --- 第二部分：今晚「奇蹟瞬間」場次設定 ---
-st.header("🔭 暴力 3x1 劇本掃描")
+# --- 第一部分：直覺組合數據 (1:0 x 3:1 x 1:1) ---
+st.header("🔭 今晚暴力 3x1 組合監控")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("⚽ 西甲：華倫西亞")
-    odds_1 = st.number_input("賠率 (1:0/2:0)", value=7.5, key="o1")
-    st.caption("里昂模式：半場 0:0 係收割信號")
+    st.subheader("🇮🇹 費倫天拿")
+    o1 = st.number_input("1:0 賠率", value=7.0)
+    st.caption("絕殺概率: 41% (76-90')")
 
 with col2:
-    st.subheader("⚽ 意甲：佛羅倫斯")
-    odds_2 = st.number_input("賠率 (2:0/2:1)", value=9.0, key="o2")
-    st.caption("控場模式：主隊戰意壓制")
+    st.subheader("🏴󠁧󠁢󠁥󠁮󠁧󠁿 曼聯 (暴力位)")
+    o2 = st.number_input("3:1 賠率", value=13.0)
+    st.caption("絕殺概率: 29% (宿敵對決)")
 
 with col3:
-    st.subheader("⚽ 英超：車路士")
-    odds_3 = st.number_input("賠率 (2:1/3:1)", value=12.0, key="o3")
-    st.caption("暴力模式：必失波但火力強")
+    st.subheader("🇵🇹 唐迪拉")
+    o3 = st.number_input("1:1 賠率", value=6.5)
+    st.caption("絕殺概率: 28% (護級大戰)")
 
-# --- 第三部分：同步對比 (3x1 奇蹟 vs 3x7 容錯) ---
-total_odds = odds_1 * odds_2 * odds_3
-payout_3x1 = bet_level * total_odds
-payout_3x7_top = (bet_level / 7) * total_odds # 假設將同等預算拆分
+# --- 第二部分：奇蹟回報計算 ---
+total_odds = o1 * o2 * o3
+payout = bet_amount * total_odds
 
 st.divider()
-c1, c2 = st.columns(2)
+c_win, c_ratio = st.columns(2)
 
-with c1:
-    st.subheader("🚀 3x1 奇蹟模式 (單點爆破)")
-    st.metric("預計派彩", f"${payout_3x1:,.0f}", f"{total_odds:.0f} 倍")
-    if payout_3x1 >= 100000:
-        st.warning("🔥 偵測到『質變級』回報：準備脫離平庸！")
+with c_win:
+    st.metric("🚀 奇蹟預計派彩", f"${payout:,.0f}")
+with c_ratio:
+    st.metric("🔥 總賠率槓桿", f"{total_odds:.1f} 倍")
 
-with c2:
-    st.subheader("🛡️ 3x7 暴力容錯 (每注 ${:.0f})".format(bet_level/7))
-    st.metric("最高回報", f"${payout_3x7_top:,.0f}")
-    st.write("適合：捕捉 5:1 類痴線波，即使斷一場仍能獲利 7k+。")
+# --- 第三部分：獵人狀態判斷 ---
+if payout >= 100000:
+    st.error("🚨 【質變級警報】：呢鋪捕捉成功，直接進入人生新階段。")
+    st.balloons()
+elif payout >= 7000:
+    st.success(f"✅ 【獵頭成功】：回報約 ${payout:,.0f}，大幅超越 7k 門檻。")
 
-# --- 第四部分：極端劇本 (5:1) 預警系統 ---
+# --- 第四部分：絕殺時段監控器 (根據截圖數據) ---
 st.divider()
-st.header("🚨 暴力異動：5:1 屠殺偵測器")
+st.header("🕵️ 劇本執行：76-90' 絕殺監控")
+st.write("根據 18:39 數據截圖，三場波尾段均屬高危進球期。")
 
-col_a, col_b = st.columns(2)
-with col_a:
-    early_goals = st.checkbox("15分鐘內出現進球？")
-    half_time_chaos = st.checkbox("半場出現 3 球或以上？")
+match_timer = st.select_slider(
+    "比賽進度 (分鐘)",
+    options=list(range(0, 91, 5)),
+    value=0
+)
 
-with col_b:
-    if early_goals and half_time_chaos:
-        st.error("🛑 警告：偵測到桑坦德式屠殺！")
-        st.write("👉 3x1 波膽失效，建議立即單場補『其他』或『5:1』！")
-    elif early_goals:
-        st.warning("⚠️ 劇本加速：密切留意大球盤口。")
-    else:
-        st.success("✅ 控場中：里昂 0:0 模式觀察中。")
-
-st.markdown("---")
-st.caption("奇蹟只係一瞬間出現。當你捉到，你就唔再係普通賭徒。")
+if match_timer >= 75:
+    st.warning("⚠️ 進入絕殺時段！數據顯示費倫天拿有 41% 機會喺呢度改寫劇本。")
+    if st.button("偵測 5:1/3:2 暴力異動"):
+        st.write("📡 掃描中... 若曼聯場波變 2:1，立即留意 3:1 奇蹟出現！")
