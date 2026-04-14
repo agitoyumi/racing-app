@@ -1,56 +1,80 @@
-import streamlit as st
 import pandas as pd
+import numpy as np
 
-# 設置頁面配置
-st.set_page_config(page_title="重生系統 2.0", layout="wide")
+class PredatorEngine:
+    def __init__(self):
+        # 載入你選定的 9 隻重生種子馬
+        self.seeds = pd.DataFrame({
+            'race': [5, 5, 5, 6, 6, 6, 7, 7, 7],
+            'no': [1, 4, 10, 3, 4, 9, 5, 6, 11],
+            'style': ['Lead', 'Forward', 'Mid', 'Forward', 'Forward', 'Lead', 'Forward', 'Forward', 'Mid'],
+            'init_odds': [7.0, 3.4, 8.7, 6.4, 15.0, 5.7, 4.2, 3.0, 14.0]
+        })
 
-# CSS 美化：對標專業交易終端配色
-st.markdown("""
-    <style>
-    .main { background-color: #0e1117; color: #ffffff; }
-    .stMetric { background-color: #1a1c23; padding: 15px; border-radius: 10px; border: 1px solid #333; }
-    .highlight-box { padding: 20px; border-radius: 10px; background-color: #262730; border-left: 5px solid #00ffcc; margin-bottom: 20px; }
-    </style>
-    """, unsafe_allow_html=True)
+    def analyze_market_bias(self, current_odds_list):
+        """
+        對比 14:41 賠率與臨場賠率，找出異常資金流向
+        """
+        self.seeds['current_odds'] = current_odds_list
+        # 計算偏差值：負數代表有人「落飛」
+        self.seeds['bias'] = (self.seeds['current_odds'] - self.seeds['init_odds']) / self.seeds['init_odds']
+        return self.seeds
 
-st.title("🚀 重生系統 2.0 | 數據對標中心")
+    def pace_filter(self, pace_forecasts):
+        """
+        pace_forecasts: dict {race_no: 'Slow'/'Fast'}
+        根據快活谷 A 欄物理特性加權
+        """
+        def calculate_weight(row):
+            pace = pace_forecasts.get(row['race'], 'Normal')
+            if pace == 'Slow':
+                # 慢步速有利放頭 (Lead/Forward)
+                return 1.2 if row['style'] in ['Lead', 'Forward'] else 0.8
+            elif pace == 'Fast':
+                # 快步速有利中後追 (Mid)
+                return 1.2 if row['style'] == 'Mid' else 0.7
+            return 1.0
 
-# --- 模組一：歐聯波膽監控 (對標圖 5, 6, 7) ---
-st.subheader("⚽ 足球：重生波膽 3x1 監控")
-col1, col2, col3 = st.columns(3)
+        self.seeds['pace_weight'] = self.seeds.apply(calculate_weight, axis=1)
+        return self.seeds
 
-with col1:
-    st.metric(label="利物浦 vs PSG (對標 1:2)", value="8.00", delta="穩定")
-with col2:
-    st.metric(label="馬體會 vs 巴塞 (對標 2:1)", value="11.50", delta="向上", delta_color="normal")
-with col3:
-    st.metric(label="高車士打 vs 阿克寧頓 (對標 2:0)", value="6.90", delta="穩定")
+    def simulation_3t_precision(self):
+        """
+        模擬「包辦前三」的極限概率
+        """
+        # 假設基礎命中率 (基於 A 欄與騎師數據)
+        base_prob = 0.25 
+        # 三場都要「包辦前三」且三隻全中，難度係極致級
+        total_prob = (base_prob ** 3) * 100
+        print(f"--- 生存反擊戰模擬 ---")
+        print(f"模組預測命中率: {total_prob:.4f}%")
+        print(f"建議注碼: $10 (單式精確打擊)")
+        print(f"目標彩池: $2,500,000 多寶")
 
-st.markdown('<div class="highlight-box"><strong>🎯 目標效率：634.8 倍</strong><br>模擬投注：$200 ➔ 預計回報：$126,960</div>', unsafe_allow_html=True)
+    def execution_report(self):
+        print("\n--- 聽朝 10:00 執行清單 ---")
+        for race in [5, 6, 7]:
+            horses = self.seeds[self.seeds['race'] == race]['no'].tolist()
+            print(f"第 {race} 場: 鎖定馬匹 {horses} -> 目標: 包辦前三名")
 
-st.divider()
+# --- 實戰執行 ---
+engine = PredatorEngine()
 
-# --- 模組二：賽馬隔夜數據對標 ---
-st.subheader("🏇 賽馬：聽日跑馬地三匹心水 (4/15)")
+# 1. 模擬臨場賠率更新 (聽朝你需要輸入實際數據)
+# 假設賠率變動不大
+latest_odds = [6.5, 3.2, 9.0, 6.0, 14.5, 5.5, 4.0, 2.8, 15.0]
+engine.analyze_market_bias(latest_odds)
 
-# 建立數據表
-racing_data = {
-    "場次": ["R1", "R1", "R1"],
-    "心水級別": ["核心主推", "副選配合", "冷門伏兵"],
-    "馬匹編號": ["待輸入", "待輸入", "待輸入"],
-    "隔夜 WIN": ["0.0", "0.0", "0.0"],
-    "隔夜 PLA": ["0.0", "0.0", "0.0"],
-    "系統信號": ["等待 12:00 開盤", "等待 12:00 開盤", "等待 12:00 開盤"]
-}
+# 2. 載入步速對標 (根據你張截圖：第 5 場慢、第 6 場快、第 7 場慢)
+pace_data = {5: 'Slow', 6: 'Fast', 7: 'Slow'}
+engine.pace_filter(pace_data)
 
-df = pd.DataFrame(racing_data)
-st.table(df)
+# 3. 輸出報告
+engine.simulation_3t_precision()
+engine.execution_report()
 
-# --- 功能區：輸入與更新 ---
-st.sidebar.header("🛠️ 數據更新入口")
-st.sidebar.info("12:00 賠率出爐後，請在此輸入數據以對標變動。")
-race_select = st.sidebar.selectbox("選擇場次", [f"R{i}" for i in range(1, 10)])
-horse_no = st.sidebar.text_input("輸入馬匹編號")
-
-if st.sidebar.button("同步至對標表"):
-    st.sidebar.success(f"數據已載入：{race_select} - {horse_no}")
+# 4. 異常報警
+anomalies = engine.seeds[engine.seeds['bias'] < -0.25]
+if not anomalies.empty:
+    print("\n⚠️ 警報：發現異常落飛馬匹！")
+    print(anomalies[['race', 'no', 'bias']])
