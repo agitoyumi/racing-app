@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Predator_Reborn", layout="wide")
 
-# CSS 修正：強制數字顯示為金黃色，標題為白色
+# 強制顏色修正：金黃色數字，綠色標題
 st.markdown("""
     <style>
     [data-testid="stMetricValue"] { color: #FFD700 !important; font-size: 32px !important; }
@@ -11,16 +11,16 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🎯 掠食者：生存反擊控制台")
+st.title("🎯 掠食者：精確反擊控制台")
 
-# --- 1. 歐聯波膽實戰組 (03:00 AM) ---
-st.header("⚽ 歐聯波膽 3x1 詳情")
+# --- 1. 歐聯波膽實戰組 (15/04 03:00) ---
+st.header("⚽ 今晚歐聯 3x1 實戰場次")
 
-# 正式比賽場次與賠率
+# 根據你提供的馬會截圖精確校對
 games = [
-    {"m": "歐聯：巴塞隆拿 vs 巴黎聖日耳門", "b": "2:2", "o": 12.0},
-    {"m": "歐聯：多蒙特 vs 馬德里體育會", "b": "3:2", "o": 22.0},
-    {"m": "歐聯：曼城 vs 皇家馬德里", "b": "1:2", "o": 8.5}
+    {"m": "歐聯：利物浦 vs 巴黎聖日耳門", "b": "2:2", "o": 12.0},
+    {"m": "歐聯：馬德里體育會 vs 巴塞隆拿", "b": "3:2", "o": 22.0},
+    {"m": "歐聯：其餘精選 (建議選曼城/皇馬場次)", "b": "1:2", "o": 8.5}
 ]
 
 total_odds = 1.0
@@ -34,8 +34,8 @@ for i, g in enumerate(games):
 
 st.divider()
 
-# --- 總回報估算 ---
-st.subheader(f"💰 預計總倍率：{total_odds:.1f} 倍")
+# --- 投注回報 ---
+st.subheader(f"💰 總倍率：{total_odds:.1f} | 命中即重生")
 r_cols = st.columns(3)
 r_cols[0].metric("投注 $100", f"${int(100 * total_odds):,}")
 r_cols[1].metric("投注 $200", f"${int(200 * total_odds):,}")
@@ -43,11 +43,12 @@ r_cols[2].metric("投注 $500", f"${int(500 * total_odds):,}")
 
 st.divider()
 
-# --- 2. 聽日 3T 對標組 ---
-st.header("🏇 聽日 3T 精確對標")
+# --- 2. 聽日 3T 對標組 (15/04) ---
+st.header("🏇 聽日 3T 精確對標 (自用)")
 
+# 原始 14:41 數據維持不變
 original = {1: 7.0, 4: 3.4, 10: 8.7, 3: 6.4, 4: 15.0, 9: 5.7, 5: 4.2, 6: 3.0, 11: 14.0}
-# 聽朝 10:00 喺度改最新賠率
+# 聽朝 10:00 改呢度
 live_odds = {1: 7.0, 4: 3.4, 10: 8.7, 3: 6.4, 4: 15.0, 9: 5.7, 5: 4.2, 6: 3.0, 11: 14.0}
 
 results = []
