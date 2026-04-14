@@ -1,30 +1,42 @@
-# --- 戰時數據手冊 (直接複製，保證唔會黑) ---
+# -*- coding: utf-8 -*-
 
-# ⚽ 今晚歐聯 (03:00) 
-# 波膽 3x1 過關：[ 2:2 / 3:2 / 1:2 ]
+def reborn_engine():
+    # ⚽ 今晚歐聯波膽劇本 (03:00)
+    football = ["2:2", "3:2", "1:2"]
 
-# 🏇 聽日 3T 單式 (每場三隻全入三甲)
-# 格式: (馬號, 14:41賠率)
+    # 🏇 聽日 3T 對標種子 (14:41 盤口)
+    # 格式: (馬號, 舊賠率, 跑法)
+    r5 = [(1, 7.0, "放頭"), (4, 3.4, "前領"), (10, 8.7, "中置")]
+    r6 = [(3, 6.4, "前領"), (4, 15.0, "前領"), (9, 5.7, "放頭")]
+    r7 = [(5, 4.2, "前領"), (6, 3.0, "前領"), (11, 14.0, "中置")]
 
-# --- 聽朝 10:00 AM 手動填入即時賠率對標 ---
-r5_data = { 1: 7.0, 4: 3.4, 10: 8.7 }
-r6_data = { 3: 6.4, 4: 15.0, 9: 5.7 }
-r7_data = { 5: 4.2, 6: 3.0, 11: 14.0 }
+    # 聽朝 10:00 AM 更新區 (手動改呢度)
+    live = {
+        1: 7.0, 4: 3.4, 10: 8.7, 
+        3: 6.4, 4: 15.0, 9: 5.7, 
+        5: 4.2, 6: 3.0, 11: 14.0
+    }
 
-print("="*30)
-print("  PREDATOR CHECKLIST  ")
-print("="*30)
+    print("\n" + "!"*40)
+    print("    SURVIVAL MISSION: REBORN")
+    print("!"*40)
+    
+    print(f"【今晚波膽 3x1】: {' | '.join(football)}")
+    print("-" * 40)
 
-def check(race, data, original):
-    print(f"R{race}:")
-    for no, old in original.items():
-        now = data[no]
-        bias = (now - old) / old * 100
-        alert = " [!] 落飛" if bias <= -20 else ""
-        print(f" #{no:<2} | {old:>4.1f} -> {now:>4.1f} ({bias:>+5.1f}%) {alert}")
+    # 執行對標
+    for race, horses in [(5, r5), (6, r6), (7, r7)]:
+        print(f"R{race} (3T 目標: 包辦三甲)")
+        for no, old, pos in horses:
+            now = live.get(no, old)
+            bias = (now - old) / old * 100
+            alert = " [!] 落飛" if bias <= -20 else ""
+            # 簡潔輸出：馬號 | 跑法 | 變動%
+            print(f"  #{no:<2} {pos:<4} | {old:>4.1f} -> {now:>4.1f} ({bias:>+5.1f}%) {alert}")
+        print("-" * 40)
 
-# 14:41 原始數據對標
-check(5, r5_data, {1: 7.0, 4: 3.4, 10: 8.7})
-check(6, r6_data, {3: 6.4, 4: 15.0, 9: 5.7})
-check(7, r7_data, {5: 4.2, 6: 3.0, 11: 14.0})
-print("="*30)
+    print("指令: $10 單式 3T | 專注物理優勢")
+    print("!"*40 + "\n")
+
+if __name__ == "__main__":
+    reborn_engine()
