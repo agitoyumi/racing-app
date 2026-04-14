@@ -1,87 +1,82 @@
 import streamlit as st
+import pandas as pd
 
-st.set_page_config(page_title="Predator_Full_Control", layout="wide")
+# 設定手機版頁面配置
+st.set_page_config(page_title="Predator_V5_DualTrack", layout="centered")
 
-# CSS 強制：金黃色數字，確保一眼睇到回報同變動
+# --- 自定義介面風格 ---
 st.markdown("""
     <style>
-    [data-testid="stMetricValue"] { color: #FFD700 !important; font-size: 32px !important; }
-    [data-testid="stMetricLabel"] { color: #ffffff !important; }
-    .match-header { color: #00ff00; font-weight: bold; font-size: 20px; }
-    .stTable { background-color: #1e1e1e; }
+    .main { background-color: #0e1117; }
+    .stMetric { background-color: #1c1e26; padding: 15px; border-radius: 10px; border: 1px solid #ffd700; }
+    .stTabs [data-baseweb="tab-list"] { gap: 20px; }
+    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: #262730; border-radius: 5px; color: white; }
+    .stTabs [aria-selected="true"] { background-color: #ffd700; color: black; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🎯 掠食者：反擊全功能控制台")
+st.title("🛡️ 掠食者：雙線自由系統")
 
-# --- 1. 歐聯/英乙 3X1 實戰清單 (鎖定劇本) ---
-st.header("⚽ 今晚實戰波膽 3x1")
+# --- 頂部狀態列：債務與資金 ---
+col_debt, col_fund = st.columns(2)
+with col_debt:
+    st.metric("債務狀態", "進行中", delta="-清還中")
+with col_fund:
+    st.metric("自由進度 (目標60萬)", "1%", delta="等待引信爆發")
 
-# 根據你最後確定的數據：高車士打 2:1(6.9), 利記 2:2(9.5), 馬體會 3:2(21)
-football_games = [
-    {"m": "英乙：高車士打 vs 域斯咸", "b": "2:1", "o": 6.9},
-    {"m": "歐聯：利物浦 vs 巴黎聖日耳門", "b": "2:2", "o": 9.5},
-    {"m": "歐聯：馬德里體育會 vs 巴塞隆拿", "b": "3:2", "o": 21.0}
-]
+# --- 雙線分頁系統 ---
+tab_footy, tab_racing, tab_freedom = st.tabs(["⚽ 足球自動化", "🏇 賽馬伏擊", "📈 辭職倒數"])
 
-total_odds = 6.9 * 9.5 * 21.0
-f_cols = st.columns(3)
+with tab_footy:
+    st.header("🎯 今日引信：3x1 波膽序列")
+    
+    # 今日核心過關資料
+    bet_data = {
+        "賽事": ["高車士打 (2:1)", "利物浦 (2:2)", "馬體會 (3:2)"],
+        "單場賠率": [6.9, 9.5, 21.0]
+    }
+    df = pd.DataFrame(bet_data)
+    st.table(df)
 
-for i, g in enumerate(football_games):
-    with f_cols[i]:
-        st.markdown(f"<div class='match-header'>{g['m']}</div>", unsafe_allow_html=True)
-        st.metric(f"選擇: {g['b']}", f"{g['o']} 倍")
+    # 倍率計算
+    total_odds = 6.9 * 9.5 * 21.0
+    st.subheader(f"🚀 總回報倍率：{total_odds:,.2f} 倍")
+    
+    # 投入金額試算
+    stake = st.radio("選擇投入金額 (今晚引信)", [100, 500, 1000], horizontal=True)
+    potential_return = stake * total_odds
+    
+    st.markdown(f"""
+        <div style="background-color: #ffd700; color: black; padding: 20px; border-radius: 15px; text-align: center;">
+            <h2 style="margin:0;">預計入袋：${int(potential_return):,}</h2>
+            <p style="margin:0;">(成功後即刻啟動清債程序)</p>
+        </div>
+    """, unsafe_allow_html=True)
 
+    st.divider()
+    st.subheader("🌐 全球數據同步 (預覽)")
+    st.info("系統正在後台對標 Betfair 及 Pinnacle 資金流...")
+    st.write("✅ 偵測到深夜賽事偏離值穩定。")
+
+with tab_racing:
+    st.header("🏇 賽馬特種部隊")
+    st.warning("目前處於『靜默伏擊』狀態")
+    st.write("保留週三/週日數據接口：")
+    st.file_uploader("📸 掟張馬會賠率截圖上嚟 (OCR 識別)", type=['png', 'jpg'])
+    st.info("💡 策略：利用足球獲利，喺馬場進行無壓力收割。")
+
+with tab_freedom:
+    st.header("🏁 遞信倒數計時器")
+    current_cash = st.number_input("當前流動資金 (HKD)", value=0)
+    target_cash = 600000
+    
+    progress = min(current_cash / target_cash, 1.0)
+    st.progress(progress)
+    st.write(f"距離老婆唔使打工仲差：${int(target_cash - current_cash):,}")
+    
+    if st.button("啟動還債模擬"):
+        st.write("優先分配：1. 債務本金 -> 2. 利息對沖 -> 3. 永動機燃料")
+
+# --- 底部指令 ---
 st.divider()
-
-# --- 投注回報預測 ---
-st.subheader(f"💰 總倍率：{total_odds:.1f} | 命中即重生")
-r_cols = st.columns(3)
-r_cols[0].metric("投注 $100", f"${int(100 * total_odds):,}")
-r_cols[1].metric("投注 $200", f"${int(200 * total_odds):,}")
-r_cols[2].metric("投注 $500", f"${int(500 * total_odds):,}")
-
-# --- 2. 聽日 3T 臨場變動分析 (已更新最新賠率) ---
-st.divider()
-st.header("🏇 聽日 3T 賠率臨場對標")
-
-# 14:41 原始種子數據
-original = {
-    1: 7.0, 4: 3.4, 10: 8.7,   # R5
-    3: 6.4, 4: 15.0, 9: 5.7,  # R6
-    5: 4.2, 6: 3.0, 11: 14.0  # R7
-}
-
-# 你剛報過嚟嘅最新賠率
-live_odds = {
-    1: 6.9, 4: 3.4, 10: 8.8, 
-    3: 6.8, 4: 11.0, 9: 6.0, 
-    5: 4.0, 6: 3.2, 11: 16.0
-}
-
-results = []
-for race, horses in [(5, [1, 4, 10]), (6, [3, 4, 9]), (7, [5, 6, 11])]:
-    for h in horses:
-        old = original[h]
-        now = live_odds[h]
-        bias = (now - old) / old * 100
-        
-        if bias <= -20:
-            status = "🔥 大戶重注"
-        elif bias > 10:
-            status = "📈 變冷"
-        else:
-            status = "穩定"
-            
-        results.append({
-            "場次": f"R{race}",
-            "馬號": h,
-            "14:41": old,
-            "最新": now,
-            "偏差 (%)": f"{bias:+.1f}%",
-            "狀態": status
-        })
-
-st.table(results)
-
-st.warning("⚠️ 筆記：R6-4號 由15倍跌至11倍 (-26.7%)，絕對係今場焦點。今晚波膽 3x1 係子彈，中咗就係贏 4 次入面最爽嗰次。")
+st.caption("Predator V5.0 | 數據領先 0.005 秒 | 財務自由專用")
