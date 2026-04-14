@@ -1,41 +1,42 @@
 import streamlit as st
 
-st.set_page_config(page_title="Predator_Reborn", layout="wide")
+# 1. 頁面基礎設定
+st.set_page_config(page_title="Predator_Control", layout="wide")
 
-# 強制顏色修正：金黃色數字，綠色標題
+# 2. 強制 CSS：確保黑底金字，數字極大化，方便公司偷睇
 st.markdown("""
     <style>
-    [data-testid="stMetricValue"] { color: #FFD700 !important; font-size: 32px !important; }
+    [data-testid="stMetricValue"] { color: #FFD700 !important; font-size: 35px !important; font-weight: bold !important; }
     [data-testid="stMetricLabel"] { color: #ffffff !important; font-size: 18px !important; }
-    .match-header { color: #00ff00; font-weight: bold; font-size: 20px; }
+    .match-header { color: #00ff00; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
+    div[data-testid="metric-container"] { background-color: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #333; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🎯 掠食者：精確反擊控制台 (數據修正版)")
+st.title("🎯 掠食者：精確反擊控制台")
 
-# --- 1. 歐聯及英甲/英乙 3X1 實戰清單 ---
-st.header("⚽ 歐聯/聯賽 3x1 實戰場次")
+# --- 1. 歐聯/英乙 3X1 實戰清單 ---
+st.header("⚽ 03:00 AM 實戰劇本 (1,376.5 倍)")
 
-# 根據你截圖的賠率與場次精確校正
+# 嚴格校對數據
 games = [
-    {"m": "英乙：高車士打 vs 域斯咸 (或其他對賽)", "b": "2:2", "o": 14.0},
-    {"m": "歐聯：利物浦 vs 巴黎聖日耳門", "b": "3:2", "o": 22.0},
-    {"m": "歐聯：馬德里體育會 vs 巴塞隆拿", "b": "1:2", "o": 14.0}
+    {"m": "英乙：高車士打 vs 域斯咸", "b": "2:1", "o": 6.9},
+    {"m": "歐聯：利物浦 vs 巴黎聖日耳門", "b": "2:2", "o": 9.5},
+    {"m": "歐聯：馬德里體育會 vs 巴塞隆拿", "b": "3:2", "o": 21.0}
 ]
 
-total_odds = 1.0
+total_odds = 6.9 * 9.5 * 21.0
 cols = st.columns(3)
 
 for i, g in enumerate(games):
-    total_odds *= g['o']
     with cols[i]:
         st.markdown(f"<div class='match-header'>{g['m']}</div>", unsafe_allow_html=True)
         st.metric(f"選擇: {g['b']}", f"{g['o']} 倍")
 
 st.divider()
 
-# --- 投注回報 ---
-st.subheader(f"💰 總倍率：{total_odds:.1f} | 命中即重生")
+# --- 投注回報計算 ---
+st.subheader(f"💰 總倍率：{total_odds:.1f} | 撬動命運")
 r_cols = st.columns(3)
 r_cols[0].metric("投注 $100", f"${int(100 * total_odds):,}")
 r_cols[1].metric("投注 $200", f"${int(200 * total_odds):,}")
@@ -43,11 +44,11 @@ r_cols[2].metric("投注 $500", f"${int(500 * total_odds):,}")
 
 st.divider()
 
-# --- 2. 聽日 3T 對標組 (15/04) ---
-st.header("🏇 聽日 3T 精確對標")
+# --- 2. 聽日 3T 對標組 (14:41 原始初心) ---
+st.header("🏇 聽日 3T 精確對標 (自用)")
 
-# 14:41 原始數據維持
 original = {1: 7.0, 4: 3.4, 10: 8.7, 3: 6.4, 4: 15.0, 9: 5.7, 5: 4.2, 6: 3.0, 11: 14.0}
+# 聽朝 10:00 根據臨場賠率改呢度
 live_odds = {1: 7.0, 4: 3.4, 10: 8.7, 3: 6.4, 4: 15.0, 9: 5.7, 5: 4.2, 6: 3.0, 11: 14.0}
 
 results = []
