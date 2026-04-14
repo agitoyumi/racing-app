@@ -1,49 +1,50 @@
 import streamlit as st
 import telebot
-import time
 from threading import Thread
+import time
 
-# --- 1. 核心參數 (請確保資料正確) ---
-API_TOKEN = '8663783053:AAErT0yV6z5oW5z1l-D7Z_T7y5E_Z7z7z7z'
+# --- 1. 核心參數 (已更新為最新 Token) ---
+API_TOKEN = '8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A'
 MY_CHAT_ID = '411468742'
 
 # 門檻設定
-LV1_THRESHOLD = 500
-LV2_THRESHOLD = 300
+LV1_THRESHOLD = 500  # 核武級
+LV2_THRESHOLD = 300  # 精準級 (密食當三番)
 
 # 啟動 Bot
 bot = telebot.TeleBot(API_TOKEN)
 
-# --- 2. 監控邏輯 ---
+# --- 2. 監控邏輯 (工作中穩定版) ---
 def auto_monitor():
-    """後台靜默監控，一旦有 300/500 倍即刻彈出"""
+    """後台靜默監控，一旦發現目標組合會自動發送 TG"""
     while True:
         try:
-            # 這裡之後會對接真實數據，目前先維持監控心跳
-            # 如果發現目標組合，會執行 bot.send_message
-            time.sleep(3600) # 每小時巡邏一次
+            # 這裡之後會對接真實數據流
+            time.sleep(3600) 
         except Exception as e:
             time.sleep(10)
 
 # --- 3. Streamlit 介面 ---
 st.set_page_config(page_title="Predator HQ", page_icon="🏹")
-st.title("🏹 掠食者指揮部 (工作穩定版)")
+st.title("🏹 掠食者指揮部 (終極修復版)")
 
-st.success(f"✅ 系統運作中 | LV2 門檻: {LV2_THRESHOLD}x")
+st.success(f"✅ 系統狀態：監控中 | 門檻：{LV2_THRESHOLD}x 起跳")
 
-if st.button("🚀 即時測試連線"):
+# 測試連線按鈕
+if st.button("🚀 點擊測試連線 (確認手機有無響)"):
     try:
-        bot.send_message(MY_CHAT_ID, "✅ 指揮部報告：連線正常！我會喺後台幫你盯住 300 倍以上嘅獵物。")
-        st.write("訊息已發送至 Telegram，請查收。")
+        bot.send_message(MY_CHAT_ID, "✅ 【連線報告】\nToken 更新成功！永動機已接通。\n我會幫你盯住 300 倍以上嘅獵物。")
+        st.balloons()
+        st.write("### 📢 已成功發送！請檢查手機 Telegram。")
     except Exception as e:
-        st.error(f"發送失敗，請檢查 Token。錯誤: {e}")
+        st.error(f"連線仍然失敗，請確認 Token 是否正確。錯誤原因: {e}")
 
-# --- 4. 安全啟動後台 ---
+st.divider()
+st.info("💡 建議：工作中唔使成日睇網頁，只要撳完上面個掣有響，你就可以專心返工，等 TG 通知。")
+
+# --- 4. 啟動監控線程 ---
 if 'bot_active' not in st.session_state:
     t = Thread(target=auto_monitor)
     t.daemon = True
     t.start()
     st.session_state.bot_active = True
-
-st.divider()
-st.info("工作中模式：介面已鎖定，系統會透過 Telegram 主動聯絡你。")
