@@ -1,42 +1,43 @@
-# -*- coding: utf-8 -*-
+import streamlit as st
 
-def reborn_engine():
-    # ⚽ 今晚歐聯波膽劇本 (03:00)
-    football = ["2:2", "3:2", "1:2"]
+# 1. 強制設定頁面，減少 Loading
+st.set_page_config(page_title="Predator_Reborn", layout="centered")
 
-    # 🏇 聽日 3T 對標種子 (14:41 盤口)
-    # 格式: (馬號, 舊賠率, 跑法)
-    r5 = [(1, 7.0, "放頭"), (4, 3.4, "前領"), (10, 8.7, "中置")]
-    r6 = [(3, 6.4, "前領"), (4, 15.0, "前領"), (9, 5.7, "放頭")]
-    r7 = [(5, 4.2, "前領"), (6, 3.0, "前領"), (11, 14.0, "中置")]
+st.title("🎯 掠食者：生存反擊戰")
 
-    # 聽朝 10:00 AM 更新區 (手動改呢度)
-    live = {
-        1: 7.0, 4: 3.4, 10: 8.7, 
-        3: 6.4, 4: 15.0, 9: 5.7, 
-        5: 4.2, 6: 3.0, 11: 14.0
-    }
+# ⚽ 今晚歐聯 (劇本備忘)
+st.subheader("今晚波膽 3x1")
+st.code("2:2 | 3:2 | 1:2", language="text")
 
-    print("\n" + "!"*40)
-    print("    SURVIVAL MISSION: REBORN")
-    print("!"*40)
-    
-    print(f"【今晚波膽 3x1】: {' | '.join(football)}")
-    print("-" * 40)
+# 🏇 聽日 3T 對標 (14:41 盤口)
+# 手動更新區：請喺下面 live_odds 改數字
+live_odds = {
+    1: 7.0, 4: 3.4, 10: 8.7,   # R5
+    3: 6.4, 4: 15.0, 9: 5.7,  # R6
+    5: 4.2, 6: 3.0, 11: 14.0  # R7
+}
 
-    # 執行對標
-    for race, horses in [(5, r5), (6, r6), (7, r7)]:
-        print(f"R{race} (3T 目標: 包辦三甲)")
-        for no, old, pos in horses:
-            now = live.get(no, old)
-            bias = (now - old) / old * 100
-            alert = " [!] 落飛" if bias <= -20 else ""
-            # 簡潔輸出：馬號 | 跑法 | 變動%
-            print(f"  #{no:<2} {pos:<4} | {old:>4.1f} -> {now:>4.1f} ({bias:>+5.1f}%) {alert}")
-        print("-" * 40)
+original = {
+    1: 7.0, 4: 3.4, 10: 8.7, 
+    3: 6.4, 4: 15.0, 9: 5.7, 
+    5: 4.2, 6: 3.0, 11: 14.0
+}
 
-    print("指令: $10 單式 3T | 專注物理優勢")
-    print("!"*40 + "\n")
+st.subheader("聽日 3T 對標報告")
 
-if __name__ == "__main__":
-    reborn_engine()
+# 用最原始嘅文字格式，防止黑屏
+report = ""
+for race, horses in [(5, [1, 4, 10]), (6, [3, 4, 9]), (7, [5, 6, 11])]:
+    report += f"\n【第 {race} 場】\n"
+    for h in horses:
+        old = original[h]
+        now = live_odds[h]
+        bias = (now - old) / old * 100
+        alert = " [!] 落飛" if bias <= -20 else ""
+        report += f" 馬#{h:<2} : {old:>4.1f} -> {now:>4.1f} ({bias:>+5.1f}%) {alert}\n"
+    report += "-" * 30 + "\n"
+
+# 用 st.text 直接噴出數據，唔會出錯
+st.text(report)
+
+st.warning("指令：$10 單式 3T | 專注物理優勢 | 贏 4 次就夠")
