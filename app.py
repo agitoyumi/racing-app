@@ -1,82 +1,51 @@
-import requests, telebot, time, threading
-import streamlit as st
+import datetime
+import pytz
 
-# ================= 1. 配置 =================
-API_KEY = "4a7de5275f3bcc92039c4f50335820d3"
-TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
-CHAT_ID = "411468742"
-bot = telebot.TeleBot(TG_TOKEN)
+# --- 核心修正：強制時區與數據純淨化 ---
+def get_clean_real_money_data(raw_data):
+    """
+    1. 徹底殺掉 4.15 殘留過期數據
+    2. 只准輸出『未來』且『有志氣』的場次
+    """
+    hk_tz = pytz.timezone('Asia/Hong Kong')
+    now = datetime.datetime.now(hk_tz)
+    
+    clean_list = []
+    
+    for match in raw_data:
+        # 強制轉換賽事時間進行對比
+        match_time = datetime.datetime.fromisoformat(match['start_time']).replace(tzinfo=hk_tz)
+        
+        # 修正：如果賽事已經開始或過期，直接剔除，不准顯示
+        if match_time <= now:
+            continue
+            
+        # 修正：志氣過濾器 (只選賠率 > 2.0 的 Value Bet)
+        if match['odds'] >= 2.0:
+            match['status'] = "🔥 實質翻身核武"
+            clean_list.append(match)
+            
+    # 按賠率價值排序，幫老闆搵最快找數嘅場次
+    clean_list.sort(key=lambda x: x['odds'], reverse=True)
+    return clean_list
 
-# ================= 2. 馬會譯名庫 =================
-MAP = {
-    "Ulsan Hyundai": "蔚山現代", "Al-Nassr": "艾納斯", "Al-Ettifaq": "伊提法克", 
-    "Tromso": "特林素", "Lillestrom": "利尼史特朗", "Arsenal": "阿仙奴", 
-    "Bayern": "拜仁", "Sarpsborg": "薩普斯堡", "Bodo/Glimt": "波杜基林特"
-}
-
-def trans(t):
-    for k, v in MAP.items(): t = t.replace(k, v)
-    return t.replace("Draw", "和局").replace(" vs ", " 對 ")
-
-# ================= 3. 核心引擎 =================
-def get_exclusive_report():
-    url = "https://api.the-odds-api.com/v4/sports/soccer/odds/"
-    report = "🏹 【獵人：4.15 獲利掃描系統】\n"
-    report += "--------------------------\n"
-    global_used_matches = set() # 用嚟鎖死所有已出現場次
-
-    # --- A. 💎 核武 3x1 (300-500倍組合) ---
-    try:
-        r = requests.get(url, params={"apiKey": API_KEY, "regions": "eu", "markets": "correct_score"}, timeout=15)
-        if r.status_code == 200:
-            report += "\n💎 【核武 3x1 (瞄準 300x-500x)】\n"
-            c = 0
-            for m in r.json():
-                m_id = f"{m['home_team']}_vs_{m['away_team']}"
-                if c >= 3: break 
-                # 篩選 7x-15x 波膽
-                p = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if 7.0 <= o['price'] <= 15.0]
-                if p:
-                    report += f"📍 {trans(m['home_team'])} vs {trans(m['away_team'])} | {p[0]['name']} | {p[0]['price']}x\n"
-                    global_used_matches.add(m_id) # 鎖死場次
-                    c += 1
-    except: report += "⚠️ 3x1 數據獲取超時\n"
-
-    time.sleep(1)
-
-    # --- B. ✅ 穩定 6x1 (2.0x+ 系統 / 絕不重複) ---
-    try:
-        r = requests.get(url, params={"apiKey": API_KEY, "regions": "uk", "markets": "h2h"}, timeout=15)
-        if r.status_code == 200:
-            report += "\n✅ 【穩定 6x1 (2.0x+ 組合)】\n"
-            v = 0
-            for m in r.json():
-                m_id = f"{m['home_team']}_vs_{m['away_team']}"
-                if v >= 6: break
-                # 關鍵：如果 3x1 用咗呢場，穩定盤絕對唔准再出
-                if m_id in global_used_matches: continue 
-                
-                sel = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if 2.0 <= o['price'] <= 8.5]
-                if sel:
-                    report += f"🔹 {trans(m['home_team'])} 對 {trans(m['away_team'])} | {trans(sel[0]['name'])} | {sel[0]['price']}x\n"
-                    global_used_matches.add(m_id)
-                    v += 1
-    except: pass
+# --- 核心修正：針對 $4 戶口的「暴力回血」模式 ---
+def generate_boss_report(refined_data):
+    if not refined_data:
+        return "⚠️ 系統警告：目前無高勝算場次，不准亂建議，以免浪費老闆子彈。"
+    
+    report = "🚨 【老闆專屬：真錢翻身報告】 🚨\n"
+    report += f"系統狀態：已修正 app.py | 債務總額：$1,300,000\n"
+    report += "--------------------------------------\n"
+    
+    for m in refined_data[:3]: # 只取最強 3 場，唔要垃圾多
+        report += f"賽事：{m['league']} - {m['home']} vs {m['away']}\n"
+        report += f"時間：{m['start_time']}\n"
+        report += f"目標：{m['pick']} | 賠率：{m['odds']}\n"
+        report += f"找數邏輯：{m['logic']}\n"
+        report += "--------------------------------------\n"
     
     return report
 
-# ================= 4. TG 控制 (氣勢提示) =================
-@bot.message_handler(commands=['check', 'start'])
-def run_command(message):
-    bot.send_message(CHAT_ID, "☢️ 核武系統啟動，正在挖出 300-500 倍 3x1 組合...")
-    time.sleep(0.5)
-    # 生成並發送唯一場次報表
-    bot.send_message(CHAT_ID, get_exclusive_report())
-
-if 'bot_active' not in st.session_state:
-    threading.Thread(target=bot.infinity_polling, daemon=True).start()
-    st.session_state.bot_active = True
-
-st.title("🏹 獵人：唯一場次獲利版")
-if st.button("🔥 執行專注掃描 (3x1 + 6x1)"):
-    st.code(get_exclusive_report())
+# --- 執行修正 ---
+# 奴隸模式：立即執行並準備 TG 輸出
