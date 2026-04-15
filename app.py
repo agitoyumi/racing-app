@@ -1,87 +1,54 @@
+import requests
+import telebot
 import streamlit as st
 
-st.set_page_config(page_title="Predator_Full_Control", layout="wide")
+# ================= 核心參數 (請老闆喺呢度填返啱嘅嘢) =================
+API_KEY = "3a0784d142517860438150499e17006d" # 檢查呢度！
+TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
+CHAT_ID = "6348332156" # 呢度一定要用 @userinfobot 比你嗰串！
 
-# CSS 強制：金黃色數字，確保一眼睇到回報同變動
-st.markdown("""
-    <style>
-    [data-testid="stMetricValue"] { color: #FFD700 !important; font-size: 32px !important; }
-    [data-testid="stMetricLabel"] { color: #ffffff !important; }
-    .match-header { color: #00ff00; font-weight: bold; font-size: 20px; }
-    .stTable { background-color: #1e1e1e; }
-    </style>
-    """, unsafe_allow_html=True)
+bot = telebot.TeleBot(TG_TOKEN)
 
-st.title("🎯 掠食者：反擊全功能控制台")
+# ================= 介面設計 =================
+st.title("⚽ 獵人狙擊系統 v2.1")
+st.write(f"當前設定的 CHAT_ID: `{CHAT_ID}`")
 
-# --- 1. 歐聯/英乙 3X1 實戰清單 (鎖定劇本) ---
-st.header("⚽ 今晚實戰波膽 3x1")
-
-# 根據你最後確定的數據：高車士打 2:1(6.9), 利記 2:2(9.5), 馬體會 3:2(21)
-football_games = [
-    {"m": "英乙：高車士打 vs 域斯咸", "b": "2:1", "o": 6.9},
-    {"m": "歐聯：利物浦 vs 巴黎聖日耳門", "b": "2:2", "o": 9.5},
-    {"m": "歐聯：馬德里體育會 vs 巴塞隆拿", "b": "3:2", "o": 21.0}
-]
-
-total_odds = 6.9 * 9.5 * 21.0
-f_cols = st.columns(3)
-
-for i, g in enumerate(football_games):
-    with f_cols[i]:
-        st.markdown(f"<div class='match-header'>{g['m']}</div>", unsafe_allow_html=True)
-        st.metric(f"選擇: {g['b']}", f"{g['o']} 倍")
-
-st.divider()
-
-# --- 投注回報預測 ---
-st.subheader(f"💰 總倍率：{total_odds:.1f} | 命中即重生")
-r_cols = st.columns(3)
-r_cols[0].metric("投注 $100", f"${int(100 * total_odds):,}")
-r_cols[1].metric("投注 $200", f"${int(200 * total_odds):,}")
-r_cols[2].metric("投注 $500", f"${int(500 * total_odds):,}")
-
-# --- 2. 聽日 3T 臨場變動分析 (已更新最新賠率) ---
-st.divider()
-st.header("🏇 聽日 3T 賠率臨場對標")
-
-# 14:41 原始種子數據
-original = {
-    1: 7.0, 4: 3.4, 10: 8.7,   # R5
-    3: 6.4, 4: 15.0, 9: 5.7,  # R6
-    5: 4.2, 6: 3.0, 11: 14.0  # R7
-}
-
-# 你剛報過嚟嘅最新賠率
-live_odds = {
-    1: 6.9, 4: 3.4, 10: 8.8, 
-    3: 6.8, 4: 11.0, 9: 6.0, 
-    5: 4.0, 6: 3.2, 11: 16.0
-}
-
-results = []
-for race, horses in [(5, [1, 4, 10]), (6, [3, 4, 9]), (7, [5, 6, 11])]:
-    for h in horses:
-        old = original[h]
-        now = live_odds[h]
-        bias = (now - old) / old * 100
-        
-        if bias <= -20:
-            status = "🔥 大戶重注"
-        elif bias > 10:
-            status = "📈 變冷"
-        else:
-            status = "穩定"
+if st.button("🔥 立即掃描並發送到 Telegram"):
+    # 1. 測試 API 數據
+    url = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=uk&markets=h2h&oddsFormat=decimal"
+    
+    try:
+        res = requests.get(url, timeout=10)
+        if res.status_code == 401:
+            st.error("❌ API Key 唔啱 (Error 401)。請檢查 API_KEY 變量。")
+        elif res.status_code == 200:
+            st.success("✅ API 連線正常！")
+            data = res.json()
+            report = "🚀 【老闆，最新獵報！】\n"
+            report += f"掃描到 {len(data)} 場深夜球賽數據...\n"
+            report += "--------------------\n"
+            # 簡化輸出做測試
+            for m in data[:3]:
+                report += f"⚽ {m['home_team']} vs {m['away_team']}\n"
             
-        results.append({
-            "場次": f"R{race}",
-            "馬號": h,
-            "14:41": old,
-            "最新": now,
-            "偏差 (%)": f"{bias:+.1f}%",
-            "狀態": status
-        })
+            # 2. 嘗試發送
+            try:
+                bot.send_message(CHAT_ID, report)
+                st.balloons()
+                st.success("✅ Telegram 收到未？收到就代表成功咗！")
+            except Exception as e:
+                st.error(f"❌ TG 發送失敗: {e}")
+                st.info("💡 提示：請確保你已經喺 TG 搵個 Bot 打過指令，而且 CHAT_ID 係啱。")
+        else:
+            st.error(f"❌ API 出咗事 (Code {res.status_code})")
+    except Exception as e:
+        st.error(f"⚠️ 網絡錯誤: {e}")
 
-st.table(results)
-
-st.warning("⚠️ 筆記：R6-4號 由15倍跌至11倍 (-26.7%)，絕對係今場焦點。今晚波膽 3x1 係子彈，中咗就係贏 4 次入面最爽嗰次。")
+# 側邊欄測試工具
+if st.sidebar.button("⚙️ 檢查通行證狀態"):
+    try:
+        me = bot.get_me()
+        st.sidebar.success(f"Bot 身份: {me.first_name}")
+        st.sidebar.info("請確保你已手動啟動個 Bot (打過 /start)")
+    except:
+        st.sidebar.error("Token 唔啱，搵唔到個 Bot。")
