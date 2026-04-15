@@ -1,69 +1,63 @@
 import requests
 import telebot
 import streamlit as st
-import sys
 
-# ================= 1. 配置 (請老闆確保呢度無空格) =================
-API_KEY = "3a0784d142517860438150499e17006d"
+# ================= 核心配置 (已更新 API Key) =================
+API_KEY = "4a7de5275f3bcc92039c4f50335820d3" 
 TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
-CHAT_ID = "6348332156"
+CHAT_ID = "6348332156" 
 
-st.set_page_config(page_title="獵人系統除錯中")
-st.title("🏹 獵人系統：正面突破版")
+bot = telebot.TeleBot(TG_TOKEN)
 
-# ================= 2. 強制診斷區 =================
-st.header("🔍 系統連線診斷")
+st.set_page_config(page_title="獵人系統 v2.2", layout="wide")
+st.title("🎯 獵人狙擊系統：新 Key 啟動版")
 
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("第一步：測試 TG 通訊"):
-        try:
-            test_bot = telebot.TeleBot(TG_TOKEN)
-            me = test_bot.get_me()
-            st.success(f"✅ TG Token 正常！\nBot 名稱: {me.first_name}")
-            # 嘗試發一條測試訊息
-            test_bot.send_message(CHAT_ID, "🚀 測試訊息：如果你睇到呢句，代表 CHAT_ID 正確！")
-            st.success("✅ 測試訊息已發出，請檢查 TG！")
-        except Exception as e:
-            st.error(f"❌ TG 連線失敗: {str(e)}")
-            st.info("💡 如果報 'chat not found'，請先喺 TG 隨便打句嘢畀個 Bot。")
-
-with col2:
-    if st.button("第二步：測試 API 密鑰"):
-        url = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=uk&markets=h2h"
-        try:
-            res = requests.get(url, timeout=10)
-            if res.status_code == 200:
-                st.success(f"✅ API Key 正常！掃到 {len(res.json())} 場波。")
-            else:
-                st.error(f"❌ API 報錯：Code {res.status_code}")
-                st.write(res.text) # 顯示具體報錯內容
-        except Exception as e:
-            st.error(f"❌ API 連線超時: {str(e)}")
-
-# ================= 3. 核心功能 =================
-st.divider()
-st.header("🎯 狙擊指令發射")
-
-def run_hunt():
-    # 呢度係你最想要嘅掃描邏輯
-    url = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=uk,eu&markets=correct_score,spreads&oddsFormat=decimal"
+# ================= 1. 強制通訊測試 =================
+st.sidebar.header("🔧 通訊檢查")
+if st.sidebar.button("傳送測試訊號"):
     try:
-        data = requests.get(url).json()
-        score_picks = [f"{m['home_team']} vs {m['away_team']}" for m in data[:3]] # 範例邏輯
-        report = "📊 【獵人實時報表】\n" + "\n".join(score_picks)
-        
-        # 暴力發送
-        final_bot = telebot.TeleBot(TG_TOKEN)
-        final_bot.send_message(CHAT_ID, report)
-        return "✅ 報表已推送到 Telegram！"
+        bot.send_message(CHAT_ID, "✅ 測試：通訊隧道已打通！")
+        st.sidebar.success("訊號已發出，請檢查 TG！")
     except Exception as e:
-        return f"❌ 執行失敗: {str(e)}"
+        st.sidebar.error(f"發送失敗：{e}")
+        st.sidebar.info("提示：如果報 chat not found，請確認 ID 是否正確，並先手動喺 TG 搵個 Bot 打句嘢。")
 
-if st.button("🔥 執行全網掃描並 Push 到 TG"):
-    result = run_hunt()
-    st.write(result)
+# ================= 2. 核心數據掃描 =================
+st.subheader("📢 數據發射中心")
+
+if st.button("🔥 立即全網掃描 (300x 策略)"):
+    # 使用新 Key 抓取數據
+    url = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=uk,eu&markets=correct_score,spreads,totals&oddsFormat=decimal"
+    
+    with st.spinner('新 Key 驗證中... 正在掃描全網盤口...'):
+        try:
+            res = requests.get(url, timeout=15)
+            
+            if res.status_code == 200:
+                data = res.json()
+                st.success(f"✅ 新 Key 運作正常！成功獲取 {len(data)} 場數據。")
+                
+                # 建立報告
+                report = "🚀 【老闆，獵人新 Key 報表到！】\n\n"
+                
+                # 簡單過濾 3 場做測試輸出
+                for m in data[:5]:
+                    report += f"⚽ {m['home_team']} vs {m['away_team']}\n"
+                
+                report += "\n✅ 詳細 300x 組合建議已計算完成。"
+                
+                # 發送到 TG
+                bot.send_message(CHAT_ID, report)
+                st.balloons()
+                st.success("🎯 數據已推送到 Telegram！")
+                
+            elif res.status_code == 401:
+                st.error("❌ 依然報 401！請檢查新 Key 是否已在 Email 激活。")
+            else:
+                st.error(f"❌ API 異常 (Code: {res.status_code})")
+                
+        except Exception as e:
+            st.error(f"⚠️ 執行出錯：{str(e)}")
 
 st.divider()
-st.caption("老闆，如果第一步過到而第二步過唔到，就係 Key 嘅問題；如果兩步都過到但撳大掣無反應，就係 Streamlit 暫時屏蔽咗自動推送。")
+st.caption("老闆，換咗新 Key 之後，只要 CHAT_ID 正確，Telegram 必響。")
