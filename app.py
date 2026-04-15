@@ -4,17 +4,16 @@ import streamlit as st
 import time
 import threading
 
-# ================= 1. 配置 (老闆專用) =================
+# ================= 1. 配置中心 =================
 API_KEY = "4a7de5275f3bcc92039c4f50335820d3" 
 TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
 CHAT_ID = "411468742" 
 bot = telebot.TeleBot(TG_TOKEN)
 
-# ================= 2. 馬會譯名庫 =================
+# ================= 2. 強力譯名轉換 =================
 HKJC_MAP = {
     "Tromso": "特林素", "Lillestrom": "利尼史特朗", "Wimbledon": "AFC 溫布頓", 
-    "Stockport": "史托港", "Racing Club": "競賽會", "Botafogo": "保地花高SP",
-    "Arsenal": "阿仙奴", "Sporting": "士砵亭", "Al-Nassr": "艾納斯"
+    "Stockport": "史托港", "Racing Club": "競賽會", "Botafogo": "保地花高SP"
 }
 
 def to_hkjc(name):
@@ -23,65 +22,64 @@ def to_hkjc(name):
         if eng in res: res = res.replace(eng, hkg)
     return res.replace("Draw", "和局").replace(" vs ", " 對 ")
 
-# ================= 3. 核心數據引擎 (完善版) =================
-def get_hunter_report():
+# ================= 3. 核武數據提取引擎 (最後防線) =================
+def fetch_perfect_report():
     url = "https://api.the-odds-api.com/v4/sports/soccer/odds/"
-    final_msg = "🚀 【獵人終極回報：核武+穩定+資金】\n"
-    final_msg += "========================\n\n"
+    report = "🚀 【獵人：4.15 終極完善報表】\n"
+    report += "========================\n\n"
     
-    # --- A. 暴力掃描波膽 (確保💎必出) ---
+    # --- Part A: 核武波膽 (💎 必須出現) ---
     try:
         cs_res = requests.get(url, params={"apiKey": API_KEY, "regions": "eu", "markets": "correct_score"})
         if cs_res.status_code == 200:
-            final_msg += "💎 【核武：300x+ 波膽狙擊】\n"
             cs_data = cs_res.json()
-            found_cs = 0
-            for m in cs_data[:10]:
+            report += "💎 【核武：300x+ 波膽狙擊】\n"
+            cs_found = 0
+            for m in cs_data:
+                if cs_found >= 6: break
                 m_name = to_hkjc(f"{m['home_team']} 對 {m['away_team']}")
-                # 搵呢場波入面最接近老闆心水嘅核武波膽 (8.5x - 22x)
-                outcomes = m['bookmakers'][0]['markets'][0]['outcomes']
-                for o in outcomes:
-                    if 8.5 <= o['price'] <= 22.0:
-                        final_msg += f"📍 {m_name} | {o['name']} | {o['price']}x\n"
-                        found_cs += 1
-                        break
-            if found_cs == 0: final_msg += "⚠️ 當前盤口波膽波動中...\n"
-    except: final_msg += "⚠️ 波膽數據載入延遲\n"
+                # 只篩選 8.5x - 25.0x 嘅優質波膽
+                valid_cs = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if 8.5 <= o['price'] <= 25.0]
+                if valid_cs:
+                    report += f"📍 {m_name} | {valid_cs[0]['name']} | {valid_cs[0]['price']}x\n"
+                    cs_found += 1
+            if cs_found == 0: report += "⚠️ 當前盤口波動中，請稍後再試。\n"
+        
+        time.sleep(2.0)
 
-    time.sleep(1.5) # 避 422 緩衝
-
-    # --- B. 穩定 2.0x+ 組合 & 資金流 ---
-    try:
+        # --- Part B: 2.0x+ 穩定組合 (硬性過濾) ---
         h2h_res = requests.get(url, params={"apiKey": API_KEY, "regions": "uk", "markets": "h2h"})
         if h2h_res.status_code == 200:
             h2h_data = h2h_res.json()
-            final_msg += "\n✅ 【高勝率：5-7 串 1 (2.0x+)】\n"
-            v_count = 0
+            report += "\n✅ 【高勝率：2.0x+ 尊嚴組合】\n"
+            h2h_count = 0
             for m in h2h_data:
-                if v_count >= 7: break
+                if h2h_count >= 8: break
                 m_name = to_hkjc(f"{m['home_team']} 對 {m['away_team']}")
-                # 嚴格物理過濾：只要 > 2.0 嘅盤口
-                valid_picks = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if o['price'] >= 2.0]
+                # 鋼鐵過濾器：只要大過或等於 2.00x，差 0.01 都唔准過
+                valid_picks = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if o['price'] >= 2.00]
                 if valid_picks:
-                    final_msg += f"🔹 {m_name} | {to_hkjc(valid_picks[0]['name'])} | {valid_picks[0]['price']}x\n"
-                    v_count += 1
-            
-            final_msg += "\n🚨 【資金異常突襲監控】\n"
-            for m in h2h_data[:8]:
+                    # 揀賠率最高嗰個，務求回報最大化
+                    pick = max(valid_picks, key=lambda x: x['price'])
+                    report += f"🔹 {m_name} | {to_hkjc(pick['name'])} | {pick['price']}x\n"
+                    h2h_count += 1
+
+            report += "\n🚨 【資金異常突襲預警】\n"
+            for m in h2h_data[:10]:
                 for o in m['bookmakers'][0]['markets'][0]['outcomes']:
-                    if 1.15 <= o['price'] <= 1.35: # 只出真熱錢預警
-                        final_msg += f"⚠️ 壓飛: {to_hkjc(m['home_team'])} ({o['price']}x)\n"
-    except: final_msg += "⚠️ 獨贏數據暫時無法獲取\n"
+                    # 只報 1.15 到 1.35 嘅「真預警」，廢除 1.01 垃圾
+                    if 1.15 <= o['price'] <= 1.35:
+                        report += f"⚠️ 壓飛: {to_hkjc(m['home_team'])} ({o['price']}x)\n"
+    except Exception as e:
+        report += f"❌ 系統錯誤: {str(e)}"
+    
+    return report
 
-    return final_msg
-
-# ================= 4. TG 指令集 (恢復提示) =================
+# ================= 4. TG 監聽恢復 =================
 @bot.message_handler(commands=['check', 'start'])
 def handle_commands(message):
-    # 恢復提示訊息
-    bot.send_message(CHAT_ID, "🎯 收到！核武系統啟動，正在為老闆整合 2.0x+ 及波膽數據...")
-    # 獲取並發送完整報表
-    bot.send_message(CHAT_ID, get_hunter_report())
+    bot.reply_to(message, "🎯 收到！核武系統正式重啟，正在剔除所有垃圾數據...")
+    bot.send_message(CHAT_ID, fetch_perfect_report())
 
 def start_bot():
     bot.infinity_polling()
@@ -90,7 +88,6 @@ if 'bot_thread' not in st.session_state:
     st.session_state.bot_thread = threading.Thread(target=start_bot, daemon=True)
     st.session_state.bot_thread.start()
 
-st.title("🏹 獵人：終極完善版")
-st.write("已鎖定：波膽必出、低於 2.0x 自動屏蔽、TG 提示恢復。")
-if st.button("🔥 執行深度全網掃描"):
-    st.code(get_hunter_report())
+st.title("🏹 獵人：4.15 終極完善解決版")
+if st.button("🔥 執行深度物理掃描"):
+    st.code(fetch_perfect_report())
