@@ -1,7 +1,3 @@
+pyTelegramBotAPI==4.16.1
+requests
 streamlit
-pandas
-requests
-beautifulsoup4
-pyTelegramBotAPI
-requests
-pyTelegramBotAPI
