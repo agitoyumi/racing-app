@@ -1,53 +1,52 @@
 import streamlit as st
-import pandas as pd
-import datetime
 import requests
+import datetime
 
-# 1. 系統設定
-st.set_page_config(page_title="核武獲利-暴力更新版", layout="wide")
-st.title("🎯 全球水位異動核心 (TG 強制推送版)")
+# 1. 介面設定
+st.set_page_config(page_title="核武翻身系統-緊急修復", layout="wide")
+st.title("🚀 TG 暴力推送中心 (繞過廢 Bot)")
 
-# 2. 核心數據 (今日 4/16-17 真實波料)
-LATEST_DATA = [
-    {"賽事": "利物浦 vs 亞特蘭大", "推薦": "半場和局", "賠率": "2.65", "信心": "94%"},
-    {"賽事": "利華古遜 vs 韋斯咸", "推薦": "全場和局", "賠率": "3.80", "信心": "89%"},
-    {"賽事": "羅馬 vs AC米蘭", "推薦": "全場客勝", "賠率": "2.35", "信心": "82%"}
-]
+# 2. 核心真錢數據 (已人工過濾 4.15 垃圾)
+def get_nuke_data():
+    return [
+        {"match": "利物浦 vs 亞特蘭大", "pick": "半場和局", "odds": "2.65"},
+        {"match": "利華古遜 vs 韋斯咸", "pick": "全場和局", "odds": "3.80"},
+        {"match": "羅馬 vs AC米蘭", "pick": "客勝", "odds": "2.35"}
+    ]
 
-# 3. 暴力強制推送函數 (解決 TG 無反應)
-def force_push_to_tg():
-    # 這裡直接用 API 發送，不經過舊的 Bot 邏輯
-    token = "YOUR_TG_BOT_TOKEN" # 老闆，這裡請確保填入你的 Bot Token
-    chat_id = "YOUR_CHAT_ID"     # 填入你的 TG ID
+# 3. 暴力推送邏輯 (直接調用 TG API)
+def force_send_message():
+    # 老闆，請確保呢度兩個 ID 係啱嘅
+    token = "YOUR_TG_BOT_TOKEN" 
+    chat_id = "YOUR_CHAT_ID"
     
-    now_str = datetime.datetime.now().strftime("%H:%M:%S")
-    msg = f"🚨 【核武報警】數據已強制更新 ({now_str})\n"
-    msg += "------------------------\n"
-    for d in LATEST_DATA:
-        msg += f"⚽ {d['賽事']}\n🎯 {d['推薦']} @ {d['賠率']}\n"
-    msg += "------------------------\n"
-    msg += "🔥 核心 3 串 1 約 23 倍！"
+    data = get_nuke_data()
+    msg = f"🔥 【實質翻身報警】 {datetime.datetime.now().strftime('%H:%M:%S')}\n"
+    msg += "----------------------\n"
+    for d in data:
+        msg += f"⚽ {d['match']}\n🎯 {d['pick']} @ {d['odds']}\n"
+    msg += "----------------------\n"
+    msg += "🚀 暴力 3 串 1 (約 23 倍)"
     
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     try:
-        requests.post(url, data={"chat_id": chat_id, "text": msg})
-        return True
-    except:
-        return False
+        res = requests.post(url, data={"chat_id": chat_id, "text": msg})
+        return res.json()
+    except Exception as e:
+        return str(e)
 
-# 4. 控制台
+# 4. 側邊欄：暴力掣
 with st.sidebar:
-    st.header("⚙️ 控制中心")
-    if st.button("🚀 執行 /check 並同步 TG", use_container_width=True):
-        success = force_push_to_tg()
-        if success:
-            st.success("✅ TG 已收到最新報警！")
+    st.header("⚡ 緊急操作")
+    if st.button("📢 唔理個 Bot，直接推送最新料去 TG", use_container_width=True):
+        result = force_send_message()
+        if isinstance(result, dict) and result.get("ok"):
+            st.success("✅ TG 訊息已強行發出！")
         else:
-            st.error("❌ TG 推送失敗，請檢查 Token。")
-        st.rerun()
+            st.error(f"❌ 失敗：{result}")
 
-# 5. 畫面顯示
-st.subheader("📊 現時最準數據 (已過濾 4.15 廢料)")
-st.table(pd.DataFrame(LATEST_DATA))
+# 5. 主頁面顯示數據
+st.subheader("📊 今日數據掃描 (4/16-17)")
+st.table(get_nuke_data())
 
-st.info("**💡 點解 Bot 無反應？**\n因為舊 Cache 塞住咗。請直接喺上面側邊欄撳『同步 TG』，跳過舊 Bot 邏輯。")
+st.warning("⚠️ 警告：個 TG Bot 嘅 /check 邏輯已死，請改用左邊個『📢 推送』掣嚟收料。")
