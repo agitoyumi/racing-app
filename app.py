@@ -1,44 +1,80 @@
-import streamlit as st
+import requests
 import telebot
-from threading import Thread
-import time
-from datetime import datetime
+import math
 
-# --- 核心參數 ---
-API_TOKEN = '8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A'
-MY_CHAT_ID = '411468742'
+# --- 基礎配置 (保持你原本的 Token) ---
+API_KEY = "你的_ODDS_API_KEY"
+TG_TOKEN = "你的_TELEGRAM_BOT_TOKEN"
+CHAT_ID = "你的_TELEGRAM_CHAT_ID"
 
-bot = telebot.TeleBot(API_TOKEN)
+bot = telebot.TeleBot(TG_TOKEN)
 
-# --- Telegram 雙軌安心指令 ---
-@bot.message_handler(commands=['check'])
-def secure_check(message):
-    now = datetime.now().strftime("%H:%M:%S")
+# --- 戰略配置 ---
+MIN_SINGLE_ODDS = 2.0      # 每場最低 2.0 倍，確保成本效益
+TARGET_TOTAL_ODDS = 300.0  # 目標總賠率（300-500倍）
+
+def fetch_premium_picks():
+    """ 掃描符合「勁嘢」標準的盤口 """
+    url = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=uk,eu&markets=spreads,totals&oddsFormat=decimal"
+    try:
+        response = requests.get(url).json()
+        picks = []
+        for match in response:
+            home = match['home_team']
+            away = match['away_team']
+            for bookie in match['bookmakers']:
+                if bookie['key'] in ['pinnacle', 'betfair_ex', 'williamhill']:
+                    for market in bookie['markets']:
+                        for outcome in market['outcomes']:
+                            # 只取賠率 >= 2.0 的單場
+                            if outcome['price'] >= MIN_SINGLE_ODDS:
+                                picks.append({
+                                    'match': f"{home} vs {away}",
+                                    'type': f"{market['key']} ({outcome['name']} {outcome.get('point', '')})",
+                                    'odds': outcome['price']
+                                })
+        return picks
+    except:
+        return []
+
+def build_mega_parlay(picks):
+    """ 自動組合成 300倍-500倍 嘅長串 """
+    if len(picks) < 5:
+        return "⚠️ 目前符合 2.0+ 條件嘅場次不足，無法組成高槓桿長串。"
+
+    # 按照賠率由低到高排，先取相對穩的 2.0+
+    picks.sort(key=lambda x: x['odds'])
     
-    status_msg = (
-        f"🛡️ **Predator 雙軌監控回報**\n"
-        f"------------------------\n"
-        f"🕒 檢查時間：{now}\n\n"
-        f"📈 **軌道一：賠率偏離 (高門檻)**\n"
-        f"   └ 狀態：進行中 (目標 300x+)\n\n"
-        f"🔥 **軌道二：異常資金 (無門檻)**\n"
-        f"   └ 狀態：進行中 (追蹤 Smart Money)\n\n"
-        f"✅ **系統狀態**：雙引擎運行正常\n"
-        f"------------------------\n"
-        f"老闆請安心，我會幫你篩選最純淨的訊號！"
-    )
-    bot.reply_to(message, status_msg, parse_mode='Markdown')
+    selected = []
+    current_total_odds = 1.0
+    
+    for p in picks:
+        selected.append(p)
+        current_total_odds *= p['odds']
+        # 當達到目標倍數 (如 300倍) 就停止，或者最多取 8 場 (8串1)
+        if current_total_odds >= TARGET_TOTAL_ODDS or len(selected) >= 8:
+            break
 
-# --- Streamlit 介面 ---
-st.set_page_config(page_title="Predator Dual-Track", page_icon="🏹")
-st.title("🏹 掠食者：雙軌全維度監控版")
-st.info("✅ 賠率偏離線 + 資金流向線 已同步啟動。")
+    if current_total_odds < 100:
+        return f"⚠️ 目前掃描到嘅最高組合僅 {round(current_total_odds, 2)} 倍，未達 300 倍門檻，建議再等等。"
 
-# 測試連線按鈕
-if st.button("🚀 點擊測試連線 (確認雙軌通道)"):
-    bot.send_message(MY_CHAT_ID, "✅ 【雙軌通訊測試】\n1. 高倍率模式 OK\n2. 資金流模式 OK")
+    msg = f"🚩 【絕殺 300x+ 自由長串】\n"
+    msg += "--------------------------\n"
+    for i, s in enumerate(selected, 1):
+        msg += f"{i}. {s['match']}\n   👉 {s['type']} | {s['odds']}倍\n"
+    
+    msg += "--------------------------\n"
+    msg += f"🔥 總賠率：{round(current_total_odds, 2)} 倍\n"
+    msg += f"💰 投注 $100 預計收回：${round(100 * current_total_odds, 2)}\n"
+    msg += "📢 「呢張飛，就係你聽日唔使返工嘅理由。」"
+    return msg
 
-# 啟動 Bot
-if 'run' not in st.session_state:
-    Thread(target=bot.polling, kwargs={'none_stop': True}, daemon=True).start()
-    st.session_state.run = True
+@bot.message_handler(commands=['hunt'])
+def run_mega_hunt(message):
+    bot.send_message(CHAT_ID, "🚀 正在掃描全網「勁嘢」，目標：300倍-500倍終極長串...")
+    picks = fetch_premium_picks()
+    report = build_mega_parlay(picks)
+    bot.send_message(CHAT_ID, report)
+
+if __name__ == "__main__":
+    bot.polling(none_stop=True)
