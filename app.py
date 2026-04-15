@@ -9,72 +9,59 @@ CHAT_ID = "411468742"
 
 bot = telebot.TeleBot(TG_TOKEN)
 
-st.set_page_config(page_title="獵人終極版", layout="wide")
-st.title("🎯 獵人 500x 專業收割系統")
+st.set_page_config(page_title="獵人終極回歸", layout="wide")
+st.title("🏹 獵人狙擊系統：暴力收割版")
 
-def get_clean_data(market_type):
+def fetch_all_markets(m_type):
     url = "https://api.the-odds-api.com/v4/sports/soccer/odds/"
-    params = {"apiKey": API_KEY, "regions": "uk,eu", "markets": market_type, "oddsFormat": "decimal"}
+    params = {"apiKey": API_KEY, "regions": "uk,eu,us", "markets": m_type, "oddsFormat": "decimal"}
     try:
-        res = requests.get(url, params=params, timeout=15)
+        res = requests.get(url, params=params, timeout=20)
         return res.json() if res.status_code == 200 else []
-    except:
-        return []
+    except: return []
 
-if st.button("🚀 執行全網精確掃描 (去重清晰版)"):
-    report = "🏹 【獵人深夜精確獵報】\n"
-    report += "========================\n\n"
+if st.button("🔥 執行終極暴力掃描 (不放過任何組合)"):
+    full_report = "🚀 【老闆，獵人全火力回歸！】\n"
+    full_report += "========================\n\n"
     
-    # 1. 處理波膽 (目標 300x)
-    with st.spinner('🔭 正在鎖定高倍波膽...'):
-        scores = get_clean_data("correct_score")
-        score_list = []
-        for match in scores:
-            match_name = f"{match['home_team']} vs {match['away_team']}"
-            # 只取第一個專業莊家的數據，避免重複
-            if match['bookmakers']:
-                mkt = match['bookmakers'][0]['markets'][0]
-                for opt in mkt['outcomes']:
-                    if 8.0 <= opt['price'] <= 16.0: # 篩選 8-16 倍，最適合做 300x 組合
-                        score_list.append(f"⚽ {match_name}\n   👉 預測：{opt['name']} | 賠率：{opt['price']}x")
+    with st.spinner('📡 正在暴力抓取全球波膽...'):
+        scores = fetch_all_markets("correct_score")
+        full_report += "💎 【300x - 500x 波膽狙擊】\n"
+        count = 0
+        for m in scores:
+            if count >= 8: break # 攞多啲畀老闆揀
+            for b in m['bookmakers'][:1]: # 只攞第一個莊家
+                for mkt in b['markets']:
+                    for o in mkt['outcomes']:
+                        if 8.0 <= o['price'] <= 25.0: # 放寬到 25 倍，更容易湊成 500x
+                            full_report += f"📍 {m['home_team']} | {o['name']} | {o['price']}x\n"
+                            count += 1
         
-        report += "💎 【深夜 3 串 1 組合建議 (300x+)】\n"
-        if len(score_list) >= 3:
-            for s in score_list[:3]: report += f"{s}\n"
-            report += "💰 預估回報：約 500x 左右\n\n"
-        else: report += "📉 當前波膽賠率未達獵人指標。\n\n"
+    with st.spinner('🔥 正在掃描 5x1 / 7x1 資金流...'):
+        h2h = fetch_all_markets("h2h")
+        full_report += "\n✅ 【5x1 / 7x1 精選 (2.0x+)】\n"
+        v_count = 0
+        for m in h2h:
+            if v_count >= 10: break
+            for b in m['bookmakers'][:1]:
+                for mkt in b['markets']:
+                    for o in mkt['outcomes']:
+                        if 2.0 <= o['price'] <= 4.0:
+                            full_report += f"🔹 {m['home_team']} vs {m['away_team']} | {o['name']} | {o['price']}x\n"
+                            v_count += 1
 
-    # 2. 處理 5-7 串 1 (高勝率)
-    with st.spinner('🔥 正在計算高勝率組合...'):
-        h2h = get_clean_data("h2h")
-        value_list = []
-        seen_matches = set() # 用嚟去重
-        for match in h2h:
-            match_name = f"{match['home_team']} vs {match['away_team']}"
-            if match_name in seen_matches: continue
-            
-            if match['bookmakers']:
-                mkt = match['bookmakers'][0]['markets'][0]
-                for opt in mkt['outcomes']:
-                    if 2.1 <= opt['price'] <= 3.5: # 2.1倍以上先叫高勝率
-                        value_list.append(f"✅ {match_name} | {opt['name']} | {opt['price']}x")
-                        seen_matches.add(match_name)
-                        break # 一場波只攞一個推薦
+        full_report += "\n🚨 【資金異常/熱錢警告】\n"
+        for m in h2h[:5]:
+            for b in m['bookmakers'][:1]:
+                for mkt in b['markets']:
+                    for o in mkt['outcomes']:
+                        if o['price'] < 1.3:
+                            full_report += f"⚠️ 熱錢湧入: {m['home_team']} ({o['price']}x)\n"
 
-        report += "🔥 【穩定收割：5-7 串 1 精選】\n"
-        if len(value_list) >= 5:
-            for v in value_list[:7]: report += f"{v}\n"
-        else: report += "📉 精選讓球盤口不足。\n"
-
-    # 3. 資金異常
-    report += "\n🚨 【數據異常監控】\n"
-    # (監控邏輯已內嵌於去重邏輯，確保資訊清晰)
-    report += "⚖️ 全網資金流向目前受控。\n"
-
-    st.code(report)
+    st.code(full_report)
     try:
-        bot.send_message(CHAT_ID, report)
+        bot.send_message(CHAT_ID, full_report)
         st.balloons()
-        st.success("🎯 專業報表已送到 Telegram，今次清晰晒！")
+        st.success("🎯 暴力報表已發送！今次大把嘢睇！")
     except Exception as e:
-        st.error(f"TG 發送失敗: {e}")
+        st.error(f"TG 失敗: {e}")
