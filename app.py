@@ -4,13 +4,13 @@ import streamlit as st
 import time
 import threading
 
-# ================= 1. 配置 (老闆專用) =================
+# ================= 1. 配置 =================
 API_KEY = "4a7de5275f3bcc92039c4f50335820d3" 
 TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
 CHAT_ID = "411468742" 
 bot = telebot.TeleBot(TG_TOKEN)
 
-# ================= 2. 強力譯名庫 (絕不失靈) =================
+# ================= 2. 專注譯名 =================
 TRANSLATION = {
     "Ulsan Hyundai": "蔚山現代", "Al-Nassr": "艾納斯", "Luton": "盧頓",
     "Tromso": "特林素", "Lillestrom": "利尼史特朗", "Wimbledon": "AFC 溫布頓", 
@@ -25,71 +25,72 @@ def hard_translate(text):
         text = text.replace(eng, hkg)
     return text.replace("Draw", "和局").replace(" vs ", " 對 ")
 
-# ================= 3. 核心救贖引擎 (物理隔離重複) =================
-def get_ultimate_rescue_report():
+# ================= 3. 核心引擎 (專注唯一性) =================
+def get_final_rescue_report():
     url = "https://api.the-odds-api.com/v4/sports/soccer/odds/"
-    report = "🚀 【獵人：4.15 真心救贖報表】\n========================\n\n"
-    seen_matches = set() # 物理隔離牆，確保場次唯一
+    report = "🚀 【獵人：4.15 最終專注報表】\n========================\n\n"
+    used_match_names = set() # 確保場次唯一
 
-    # --- A. 💎 核武波膽 (8x - 60x) ---
+    # --- A. 💎 核武波膽 (優先執行) ---
     try:
         cs_res = requests.get(url, params={"apiKey": API_KEY, "regions": "eu", "markets": "correct_score"})
         if cs_res.status_code == 200:
             cs_data = cs_res.json()
             report += "💎 【核武：高倍波膽狙擊】\n"
-            count = 0
+            c = 0
             for m in cs_data:
-                m_id = f"{m['home_team']}_{m['away_team']}"
-                if count >= 4: break
-                # 嚴格鎖定波膽賠率範圍
+                if c >= 4: break
+                m_title = f"{m['home_team']} vs {m['away_team']}"
+                # 篩選 8-60x 正常波膽，拒絕 1001x 垃圾
                 picks = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if 8.0 <= o['price'] <= 60.0]
                 if picks:
-                    m_name = hard_translate(f"{m['home_team']} 對 {m['away_team']}")
-                    report += f"📍 {m_name} | {picks[0]['name']} | {picks[0]['price']}x\n"
-                    seen_matches.add(m_id) # 標記場次，唔准重複
-                    count += 1
-            if count == 0: report += "⚠️ 核武數據搜集中...\n"
+                    report += f"📍 {hard_translate(m_title)} | {picks[0]['name']} | {picks[0]['price']}x\n"
+                    used_match_names.add(m['home_team'])
+                    used_match_names.add(m['away_team'])
+                    c += 1
     except: report += "⚠️ 核武模組離線\n"
 
-    time.sleep(1.0)
+    time.sleep(1.2)
 
-    # --- B. ✅ 穩定組合 (鋼鐵 2.0x+ / 絕不重複) ---
+    # --- B. ✅ 穩定組合 (沿用 20:37 成功邏輯) ---
     try:
         h2h_res = requests.get(url, params={"apiKey": API_KEY, "regions": "uk", "markets": "h2h"})
         if h2h_res.status_code == 200:
             h2h_data = h2h_res.json()
-            report += "\n✅ 【高勝率：2.0x+ 穩定組合】\n"
-            v_count = 0
+            report += "\n✅ 【穩定：5-7 串 1 精選 (2.0x+)】\n"
+            v = 0
             for m in h2h_data:
-                m_id = f"{m['home_team']}_{m['away_team']}"
-                if v_count >= 6: break
-                if m_id in seen_matches: continue # 物理攔截：如果核武用咗呢場，呢度唔准再出
+                if v >= 7: break
+                # 物理檢查：核武用過嘅隊，穩定盤唔准再用
+                if m['home_team'] in used_match_names or m['away_team'] in used_match_names: continue
                 
-                # 鋼鐵 2.0x 門檻，絕不妥協
-                valid = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if 2.0 <= o['price'] <= 8.0]
+                valid = [o for o in m['bookmakers'][0]['markets'][0]['outcomes'] if 2.0 <= o['price'] <= 8.5]
                 if valid:
-                    m_name = hard_translate(f"{m['home_team']} 對 {m['away_team']}")
-                    report += f"🔹 {m_name} | {hard_translate(valid[0]['name'])} | {valid[0]['price']}x\n"
-                    seen_matches.add(m_id)
-                    v_count += 1
+                    m_title = f"{m['home_team']} 對 {m['away_team']}"
+                    report += f"🔹 {hard_translate(m_title)} | {hard_translate(valid[0]['name'])} | {valid[0]['price']}x\n"
+                    used_match_names.add(m['home_team'])
+                    used_match_names.add(m['away_team'])
+                    v += 1
 
-            # --- C. 🚨 資金監控 (壓飛) ---
-            report += "\n🚨 【資金突襲：大戶監控】\n"
+            # --- C. 🚨 資金監控 ---
+            report += "\n🚨 【資金異常熱錢監控】\n"
             for m in h2h_data[:15]:
                 for o in m['bookmakers'][0]['markets'][0]['outcomes']:
                     if 1.01 <= o['price'] <= 1.35:
                         report += f"⚠️ 壓飛: {hard_translate(m['home_team'])} ({o['price']}x)\n"
-    except: report += "⚠️ 穩定盤模組離線\n"
+    except: report += "⚠️ 穩定模組離線\n"
 
     return report
 
-# ================= 4. TG 啟動 (恢復晏晝氣勢) =================
+# ================= 4. TG 啟動 (死命令：提示必須先發) =================
 @bot.message_handler(commands=['check', 'start'])
 def handle_check(message):
-    bot.send_message(CHAT_ID, "☢️ 核武系統啟動，正在為老闆挖出所有高倍波膽...")
-    # 確保核武同穩定盤一齊發出
-    final_msg = get_ultimate_rescue_report()
-    bot.send_message(CHAT_ID, final_msg)
+    # 先發氣勢提示
+    bot.send_message(CHAT_ID, "☢️ 核武系統啟動，正在幫老闆挖出所有高倍波膽...")
+    # 延遲 1 秒確保提示先出
+    time.sleep(1)
+    # 再發完整報表
+    bot.send_message(CHAT_ID, get_final_rescue_report())
 
 def start_bot():
     bot.infinity_polling()
@@ -98,7 +99,6 @@ if 'bot_thread' not in st.session_state:
     st.session_state.bot_thread = threading.Thread(target=start_bot, daemon=True)
     st.session_state.bot_thread.start()
 
-st.title("🏹 獵人：救贖整合版")
-st.write("唯一場次、核武回歸、2.0x 鋼鐵門檻。")
-if st.button("🔥 執行終極整合掃描"):
-    st.code(get_ultimate_rescue_report())
+st.title("🏹 獵人：4.15 專注完整版")
+if st.button("🔥 立即執行全功能救亡掃描"):
+    st.code(get_final_rescue_report())
