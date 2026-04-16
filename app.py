@@ -1,49 +1,37 @@
 import streamlit as st
 import requests
 
-# 1. 聯絡通道
+# 1. 唯一聯絡通道 (你的 TG)
 BOT_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
 MY_CHAT_ID = "411468742"
 
-st.set_page_config(page_title="210萬清債-實時系統", layout="wide")
+st.set_page_config(page_title="今晚必須見錢")
 
-# 2. 標題與聲明
-st.title("🎯 2026/04/17 凌晨 03:00 實施指令")
-st.error("⚠️ 老闆，呢鋪係對準你張圖個賠率，三場全和，博 34.8 倍。")
+st.title("🎯 4月17日 03:00 找數組合")
 
-# 3. 實戰場次 (改用原始表格寫法，唔使 pandas)
-st.write("### 📋 實施場次詳情")
+# 2. 完全對準你張圖，不再甩轆
 st.markdown("""
-| 賽事 | 推介 | 賠率 |
-| :--- | :--- | :--- |
-| 諾定咸森林 vs 波圖 | 全場和局 | 2.98 |
-| 費倫天拿 vs 水晶宮 | 全場和局 | 3.25 |
-| 斯特拉斯堡 vs 緬恩斯 | 全場和局 | 3.60 |
+### 📊 鎖定目標 (3 串 1)
+- **諾定咸森林 vs 波圖** -> 【和局】@ 2.98
+- **費倫天拿 vs 水晶宮** -> 【和局】@ 3.25
+- **斯特拉斯堡 vs 緬恩斯** -> 【和局】@ 3.60
+
+### 🚀 預計倍數：34.8 倍
 """)
 
-# 4. 回報計算
-total_odds = 2.98 * 3.25 * 3.60
-st.subheader(f"🚀 總賠率：{total_odds:.2f} 倍")
-
-st.write("---")
-st.write("### 💰 實戰回報參考")
-st.write(f"- 投入 $50  ->  回報 **${50 * total_odds:.0f}**")
-st.write(f"- 投入 $100 ->  回報 **${100 * total_odds:.0f}**")
-st.write(f"- 投入 $200 ->  回報 **${200 * total_odds:.0f}**")
-st.write(f"- 投入 $500 ->  回報 **${500 * total_odds:.0f}**")
-
-# 5. 指令推送功能
-if st.button("📢 確定無誤，推送指令至手機"):
-    msg = f"🎯 老闆，2026/04/17 最終組合：\n1. 森林[和] @ 2.98\n2. 費倫[和] @ 3.25\n3. 斯特[和] @ 3.60\n🔥 總賠率：{total_odds:.2f}"
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+# 3. 推送指令到 TG (確保你買嗰陣有紀錄對準場次)
+if st.button("📢 確定今晚場次，推送指令到手機"):
+    text = "🎯 今晚 03:00 絕地找數指令：\n1. 森林 vs 波圖 [和] 2.98\n2. 費倫 vs 水晶宮 [和] 3.25\n3. 斯特 vs 緬恩斯 [和] 3.60\n🔥 總倍率：34.8"
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={MY_CHAT_ID}&text={text}"
+    
     try:
-        res = requests.post(url, data={"chat_id": MY_CHAT_ID, "text": msg})
+        res = requests.get(url)
         if res.status_code == 200:
-            st.success("✅ 手機已收到指令！")
+            st.success("✅ 手機收到！今晚 03:00，就係呢三場。")
         else:
-            st.error("❌ TG 推送失敗，請檢查 Token。")
+            st.error("❌ 推送失敗，請檢查網路。")
     except:
-        st.error("❌ 網路連線出錯。")
+        st.error("❌ 連線出錯。")
 
 st.write("---")
-st.caption("更新時間: 2026/04/16 08:30 | 實時校準完畢")
+st.write("💰 $100 -> $3,480 | $200 -> $6,960")
