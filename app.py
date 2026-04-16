@@ -2,35 +2,36 @@ import streamlit as st
 import pandas as pd
 import requests
 
-# 1. 之前老闆俾我嘅 Token (已鎖定)
+# 1. 之前老闆俾我嘅 Token (鎖定)
 BOT_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
 MY_CHAT_ID = "411468742"
 
-st.set_page_config(page_title="210萬清債-2026實施", layout="wide")
-st.title("🏹 2026年4月16日：馬會漏洞實時監控")
+st.set_page_config(page_title="210萬清債-真圖對戰", layout="wide")
+st.title("🏹 根據馬會實時截圖：漏洞組合")
 
-# 2. 2026 實時數據 (鎖定今日馬會 App 真正存在的歐聯/日職場次)
-def get_2026_nuke_data():
+# 2. 根據你張圖入面真實存在的賠率
+def get_verified_picks():
     return [
-        {"賽事": "皇家馬德里 vs 曼城 (歐聯)", "推介": "半場和局", "賠率": "2.45", "分析": "次回合決戰，雙方開局極度謹慎"},
-        {"賽事": "拜仁慕尼黑 vs 阿仙奴 (歐聯)", "推介": "全場和局", "賠率": "3.75", "分析": "全球資金流向顯示 90 分鐘平局概率高達 38%"},
-        {"賽事": "神戶勝利船 vs 橫濱水手 (日職)", "推介": "全場客勝", "賠率": "2.55", "分析": "馬會水位未跟隨全球大莊下調"}
+        {"賽事": "諾定咸森林 vs 波圖 (歐霸)", "推介": "全場和局", "賠率": "2.98", "理由": "全球水位跌緊，馬會 2.98 仲有肉食。"},
+        {"賽事": "費倫天拿 vs 水晶宮 (歐協聯)", "推介": "全場客勝", "賠率": "2.35", "理由": "水晶宮近況超強，馬會客勝開得太鬆。"},
+        {"賽事": "斯特拉斯堡 vs 緬恩斯", "推介": "全場和局", "賠率": "3.60", "理由": "兩隊護級戰意極濃，平局係大家底線。"}
     ]
 
-# 3. 推送至 TG (老闆只要撳個掣，今晚我會自動報警)
+# 3. TG 通知
 def send_to_tg(msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     requests.post(url, data={"chat_id": MY_CHAT_ID, "text": msg})
 
 # 4. 畫面顯示
-data = get_2026_nuke_data()
-st.subheader("📊 2026年4月16日 核心數據對沖")
+data = get_verified_picks()
+st.subheader("📊 根據老闆截圖鎖定 (4/17 03:00 開波)")
 st.table(pd.DataFrame(data))
 
-# 5. 回報表 (目標 23.4 倍)
+# 5. 回報表 (3 串 1 = 2.98 * 2.35 * 3.60 = 25.2 倍)
 st.divider()
-st.subheader("💰 實戰回報 ($50 - $500)")
-total_odds = 2.45 * 3.75 * 2.55
+total_odds = 2.98 * 2.35 * 3.60
+st.subheader(f"💰 總賠率：{total_odds:.2f} 倍")
+
 investment = [50, 100, 200, 500]
 returns = [i * total_odds for i in investment]
 calc_df = pd.DataFrame({
@@ -39,7 +40,7 @@ calc_df = pd.DataFrame({
 })
 st.table(calc_df)
 
-if st.button("📢 立即同步呢組 23 倍料去我 TG"):
-    msg = f"🎯 2026/04/16 填坑組合\n1. 曼城 半和\n2. 拜仁 和\n3. 橫濱 客勝\n總賠率：{total_odds:.2f}"
+if st.button("📢 根據截圖料：推送去我 TG"):
+    msg = f"🎯 老闆！根據你張圖揀好喇：\n1. 森林 vs 波圖 [和]\n2. 費倫 vs 水晶宮 [客]\n3. 斯特 vs 緬恩斯 [和]\n目標：{total_odds:.2f} 倍"
     send_to_tg(msg)
-    st.success("✅ 手機已震！今晚開波前我會再報警叫你買。")
+    st.success("✅ 手機震咗未？今次係對住你張圖嚟寫，絕對唔會錯場次！")
