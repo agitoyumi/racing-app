@@ -1,52 +1,40 @@
-import tkinter as tk
-from tkinter import ttk
-import datetime
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
-# 真正 4/17 的賽事數據 (根據你最新圖表)
-def get_real_time_odds():
-    return [
-        {"time": "17:30", "id": "FB1453", "teams": "溫納姆狼隊 vs 黃金海岸騎士", "odds": "1:2 (8.25) / 0:2 (17.0)"},
-        {"time": "17:35", "id": "FB1455", "teams": "墨爾本勝利 vs 紐卡素噴射機", "odds": "2:0 (13.0) / 2:1 (7.75)"},
-        {"time": "18:00", "id": "FB1461", "teams": "FC大阪 vs FC愛媛", "odds": "1:0 (5.80) / 1:1 (6.20)"}
-    ]
+# 設定網頁標題
+st.set_page_config(page_title="老闆反擊戰 - 數據中樞", layout="centered")
 
-def update_dashboard():
-    for i in tree.get_children():
-        tree.delete(i)
-    matches = get_real_time_odds()
-    for m in matches:
-        tree.insert("", "end", values=(m["time"], m["id"], m["teams"], m["odds"]))
-    status_label.config(text=f"最後更新: {datetime.datetime.now().strftime('%H:%M:%S')} | 狀態: 盯死中 🎯")
-    root.after(30000, update_dashboard) # 每30秒自動刷新一次
+st.title("🚀 今日 4/17 數據反擊線")
+st.subheader("寫咗成個禮拜，今晚一定要攞成績！")
 
-# 建立介面
-root = tk.Tk()
-root.title("老闆反擊戰 - 自動更新系統 v1.0")
-root.geometry("700x400")
-root.configure(bg="#1a1a1a") # 深色底色，唔傷眼
+# 1. 核心場次數據 (根據你 07:56 的截圖)
+matches = [
+    {"時間": "17:45", "編號": "FB7147", "對賽": "阿德萊德聯 vs 麥克阿瑟", "玩法": "主客和 [和]", "賠率": 3.65},
+    {"時間": "18:00", "編號": "FB7273", "對賽": "神戶勝利船 vs 名古屋鯨魚", "玩法": "主客和 [和]", "賠率": 3.40},
+    {"時間": "02:30", "編號": "FB8350", "對賽": "法蘭克福 vs 奧格斯堡", "玩法": "讓球主客和 [讓主]", "賠率": 2.05}
+]
 
-style = ttk.Style()
-style.theme_use("clam")
-style.configure("Treeview", background="#2b2b2b", foreground="white", fieldbackground="#2b2b2b", rowheight=40)
-style.map("Treeview", background=[('selected', '#0078d7')])
+df = pd.DataFrame(matches)
 
-# 標題
-title_label = tk.Label(root, text="今日 4/17 必收波膽反擊線", font=("Arial", 18, "bold"), fg="#00ff00", bg="#1a1a1a", pady=20)
-title_label.pack()
+# 2. 顯示表格
+st.table(df)
 
-# 表格
-columns = ("時間", "編號", "對賽", "精選波膽賠率")
-tree = ttk.Treeview(root, columns=columns, show="headings")
-for col in columns:
-    tree.heading(col, text=col)
-    tree.column(col, width=150, anchor="center")
-tree.pack(expand=True, fill="both", padx=10, pady=10)
+# 3. 自動利潤計算器
+st.divider()
+st.sidebar.header("💰 利潤計算器")
+bet_amount = st.sidebar.number_input("輸入注碼 ($)", min_value=10, value=100, step=10)
 
-# 狀態列
-status_label = tk.Label(root, text="正在初始化...", fg="#aaaaaa", bg="#1a1a1a", pady=10)
-status_label.pack()
+# 計算總賠率
+total_odds = 1
+for m in matches:
+    total_odds *= m["賠率"]
 
-# 啟動自動更新
-update_dashboard()
+estimated_payout = bet_amount * total_odds
 
-root.mainloop()
+st.metric(label="總賠率 (3 串 1)", value=f"{total_odds:.2f} 倍")
+st.success(f"🎯 若全中，預計派彩：${estimated_payout:,.2f}")
+
+# 4. 狀態更新
+st.caption(f"最後更新時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+st.info("老闆，場次已鎖定：阿德、神戶、法蘭。今晚守住 17:45 開波！")
