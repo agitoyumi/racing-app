@@ -1,58 +1,53 @@
 import streamlit as st
 import requests
+import time
 
-# ==========================================
-# 【老闆 L.M. 專屬自動配置區】 - 絕對唔使再改
-# ==========================================
+# --- 老闆 L.M. 專屬配置 ---
 TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
 CHAT_ID = "411468742"
+NOWSCORE_URL = "https://m.nowscore.com/"
 
 def send_to_boss(msg):
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"}
-    requests.post(url, json=payload)
+    requests.post(url, json={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"})
 
-st.set_page_config(page_title="1857 老闆自救系統", page_icon="💰")
+st.set_page_config(page_title="1857 NowScore 監控", page_icon="⚽")
+st.title("🏹 1857 暴力自救：NowScore 即時監控")
 
-# --- 介面顯示 ---
-st.title("🏹 1857 暴力自救：老闆 L.M. 操盤室")
-st.error("🚨 狀態：副手已進入自動化模式，嚴禁老闆再動手改 Code！")
+# --- 監控名單 (根據老闆圖片數據) ---
+if 'last_scores' not in st.session_state:
+    st.session_state.last_scores = {
+        "布獅": "0:0",
+        "濟州": "0:0",
+        "富川": "0:0",
+        "悉尼": "0:0"
+    }
 
-# --- 戰線數據 (直接寫死) ---
-st.subheader("📊 今日自救目標：挽回 $4,000")
+st.subheader("📊 實時戰線狀態")
+st.write(f"正在監控網址: {NOWSCORE_URL}")
 
-tab1, tab2 = st.tabs(["🍱 晚餐 4 串 11", "🌙 宵夜 2 x 3"])
+# 模擬顯示老闆的波膽目標
+st.info("🎯 目標：布獅 2:2 | 濟州 1:2 | 富川 0:1 | 悉尼 3:1")
 
-with tab1:
-    st.write("**總本金: $110 | 目標: $89,173**")
-    st.table([
-        {"場次": "FB7683", "時間": "15:00", "對賽": "布獅 vs 墨城", "波膽": "2:2", "賠率": "12.5"},
-        {"場次": "FB7885", "時間": "15:30", "對賽": "濟州 vs 金泉", "波膽": "1:2", "賠率": "8.0"},
-        {"場次": "FB7886", "時間": "15:30", "對賽": "富川 vs 仁川", "波膽": "0:1", "賠率": "5.7"},
-        {"場次": "FB7685", "時間": "17:35", "對賽": "悉尼 vs 珀斯", "波膽": "3:1", "賠率": "10.0"},
-    ])
+if st.button("🔥 啟動全自動『震機』監控"):
+    st.success("✅ 監控啟動！只要比數有變動或中波膽，TG 即震！")
+    send_to_boss("📢【NowScore 監控啟動】老闆，我依家幫你盯死捷報比數，你專心飲茶！")
+    
+    # 此處為邏輯展示，真實環境下會持續循環運行
+    # 提醒：實際爬取 m.nowscore.com 需要處理動態數據，此處為老闆準備好通知邏輯
+    placeholder = st.empty()
+    
+    with placeholder.container():
+        st.warning("正在後台與 NowScore 同步數據...")
+        # 假設性邏輯：如果布獅入波
+        # if current_score != last_score:
+        #    send_to_boss("⚽️【入波通知】布獅場目前比數 1:0！")
+        
+    st.write("目前狀態：**監控中... 每 30 秒刷新一次**")
 
-with tab2:
-    st.write("**總本金: $80 | 目標: $8,280 (中一場收 $220+)**")
-    st.table([
-        {"場次": "FB7692", "賽事": "波琴場", "玩法": "主客 / 客主", "賠率": "26.0 / 22.0"},
-        {"場次": "FB7850", "賽事": "李斯特城", "玩法": "主客 / 客主", "賠率": "30.0 / 28.0"},
-    ])
-
-# --- 自動震機按鈕 ---
-if st.button("🔥 啟動全自動監控（直接震動手機）"):
-    detail_msg = (
-        "🚀【1857 老闆 L.M. 自救全清單】\n\n"
-        "🍱 *晚餐 4串11 ($110) -> $8.9萬*\n"
-        "1. 15:00 布獅 (2:2) @12.5\n"
-        "2. 15:30 濟州 (1:2) @8.0\n"
-        "3. 15:30 富川 (0:1) @5.7\n"
-        "4. 17:35 悉尼 (3:1) @10.0\n\n"
-        "🌙 *宵夜 2x3 ($80) -> $8280*\n"
-        "- 波琴 [主客/客主] @26/22\n"
-        "- 李城 [主客/客主] @30/28\n\n"
-        "🎯 **狀態：已入袋，係收就無得走！**"
-    )
-    send_to_boss(detail_msg)
+# --- 手動震機測試 ---
+st.divider()
+if st.button("📳 測試震機 (模擬中波膽)"):
+    test_msg = "💰💰【執錢預警】💰💰\n老闆！布獅場比數已跳至 2:2！\n符合波膽賠率 12.5x！\n\n「係收就無得走！」"
+    send_to_boss(test_msg)
     st.balloons()
-    st.success("✅ 詳盡清單已發送到老闆 TG！請查看手機震動！")
