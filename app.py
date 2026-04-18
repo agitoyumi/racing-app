@@ -1,41 +1,58 @@
 import streamlit as st
 import requests
-import time
 
-# --- 老闆專屬配置 (已自動填寫) ---
+# ==========================================
+# 【老闆 L.M. 專屬自動配置區】 - 絕對唔使再改
+# ==========================================
 TG_TOKEN = "8663783053:AAErT9AAZEbE3bcHPOQmY_78uSk8f1De70A"
 CHAT_ID = "411468742"
 
-def send_tg_alert(message):
+def send_to_boss(msg):
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
-    try:
-        requests.post(url, json=payload)
-    except Exception as e:
-        st.error(f"TG 發送失敗: {e}")
+    payload = {"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"}
+    requests.post(url, json=payload)
 
-st.set_page_config(page_title="1857 自救監控", page_icon="🏹")
+st.set_page_config(page_title="1857 老闆自救系統", page_icon="💰")
 
-st.title("🏹 1857 暴力自救：老闆 L.M. 專屬")
+# --- 介面顯示 ---
+st.title("🏹 1857 暴力自救：老闆 L.M. 操盤室")
+st.error("🚨 狀態：副手已進入自動化模式，嚴禁老闆再動手改 Code！")
 
-# --- 戰線數據看板 ---
-st.subheader("🍱 晚餐：4 串 11 (目標 $8.9萬)")
-col1, col2 = st.columns(2)
-with col1:
-    st.info("🕒 15:00 布獅 vs 墨城 (2:2) - 12.5x")
-    st.info("🕒 15:30 濟州 vs 金泉 (1:2) - 8.0x")
-with col2:
-    st.info("🕒 15:30 富川 vs 仁川 (0:1) - 5.7x")
-    st.info("🕒 17:35 悉尼 vs 珀斯 (3:1) - 10.0x")
+# --- 戰線數據 (直接寫死) ---
+st.subheader("📊 今日自救目標：挽回 $4,000")
 
-st.subheader("🌙 宵夜：2 x 3 (逆轉起家彈)")
-st.warning("🎯 波琴 + 李斯特城 [主客/客主] | 中一場即收 $220+ | 全中 $8,280")
+tab1, tab2 = st.tabs(["🍱 晚餐 4 串 11", "🌙 宵夜 2 x 3"])
 
-# --- 震機監控按鈕 ---
-if st.button("🔥 啟動 TG 實時震機監控 (自救開始)"):
+with tab1:
+    st.write("**總本金: $110 | 目標: $89,173**")
+    st.table([
+        {"場次": "FB7683", "時間": "15:00", "對賽": "布獅 vs 墨城", "波膽": "2:2", "賠率": "12.5"},
+        {"場次": "FB7885", "時間": "15:30", "對賽": "濟州 vs 金泉", "波膽": "1:2", "賠率": "8.0"},
+        {"場次": "FB7886", "時間": "15:30", "對賽": "富川 vs 仁川", "波膽": "0:1", "賠率": "5.7"},
+        {"場次": "FB7685", "時間": "17:35", "對賽": "悉尼 vs 珀斯", "波膽": "3:1", "賠率": "10.0"},
+    ])
+
+with tab2:
+    st.write("**總本金: $80 | 目標: $8,280 (中一場收 $220+)**")
+    st.table([
+        {"場次": "FB7692", "賽事": "波琴場", "玩法": "主客 / 客主", "賠率": "26.0 / 22.0"},
+        {"場次": "FB7850", "賽事": "李斯特城", "玩法": "主客 / 客主", "賠率": "30.0 / 28.0"},
+    ])
+
+# --- 自動震機按鈕 ---
+if st.button("🔥 啟動全自動監控（直接震動手機）"):
+    detail_msg = (
+        "🚀【1857 老闆 L.M. 自救全清單】\n\n"
+        "🍱 *晚餐 4串11 ($110) -> $8.9萬*\n"
+        "1. 15:00 布獅 (2:2) @12.5\n"
+        "2. 15:30 濟州 (1:2) @8.0\n"
+        "3. 15:30 富川 (0:1) @5.7\n"
+        "4. 17:35 悉尼 (3:1) @10.0\n\n"
+        "🌙 *宵夜 2x3 ($80) -> $8280*\n"
+        "- 波琴 [主客/客主] @26/22\n"
+        "- 李城 [主客/客主] @30/28\n\n"
+        "🎯 **狀態：已入袋，係收就無得走！**"
+    )
+    send_to_boss(detail_msg)
     st.balloons()
-    send_tg_alert("✅【老闆 L.M. 自救啟動】\n\n子彈已鎖定：\n1. 4串11 ($110) -> 衝擊 $89,173\n2. 2x3 ($80) -> 逆轉收割 $8,280\n\n「係收就無得走！」第一場布獅即將開火！")
-    st.success("🎯 已發送測試訊號到你的 Telegram！請檢查手機震唔震！")
-
-st.divider()
-st.caption("副手備註：數據已對準圖片，ID/Token 已入位。老闆，今日一定要收錢！")
+    st.success("✅ 詳盡清單已發送到老闆 TG！請查看手機震動！")
